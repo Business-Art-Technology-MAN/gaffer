@@ -39,8 +39,9 @@ import pathlib
 import sys
 import argparse
 import hashlib
-import subprocess
 import shutil
+import subprocess
+import zipfile
 
 if sys.version_info[0] < 3 :
 	from urllib import urlretrieve
@@ -95,19 +96,18 @@ archiveURL = args.archiveURL.format(
 sys.stderr.write( "Downloading dependencies \"{}\"\n".format( archiveURL ) )
 archiveFileName, headers = urlretrieve( archiveURL )
 
-pathlib.Path( args.dependenciesDir ).mkdir( parents = True )
+pathlib.Path( args.dependenciesDir ).mkdir( parents = True, exist_ok = True )
 if sys.platform != "win32" :
 	subprocess.check_call( [ "tar", "xf", archiveFileName, "-C", args.dependenciesDir, "--strip-components=1" ] )
 else:
-	subprocess.check_call(
-		[ "7z", "x", archiveFileName, "-o{}".format( args.dependenciesDir ), "-aoa", "-y" ],
-		stdout = sys.stderr,
-	)
-	# 7z (and zip extractors generally) don't have an equivalent of --strip-components=1
-	# Copy the files up one directory level to compensate
-	extractedPath = pathlib.Path( args.dependenciesDir ) / pathlib.Path( archiveURL ).stem
+	# Prefer stdlib unpacking so no external 7-Zip install/path is required.
+	extractRoot = pathlib.Path( args.dependenciesDir ).resolve()
+	with zipfile.ZipFile( archiveFileName, "r" ) as zf :
+		zf.extractall( extractRoot )
+	# Mirrors `tar`'s `--strip-components=1` behaviour used on Linux/macOS above.
+	extractedPath = extractRoot / pathlib.Path( archiveURL ).stem
 	for p in extractedPath.glob( "*" ) :
-		shutil.move( str( p ), args.dependenciesDir )
+		shutil.move( str( p ), extractRoot )
 
 	extractedPath.rmdir()
 

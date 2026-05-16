@@ -42,7 +42,7 @@ class About :
 	@staticmethod
 	def name() :
 
-		return "Gaffer"
+		return "MarketLab"
 
 	@staticmethod
 	def milestoneVersion() :

@@ -51,8 +51,8 @@ class gui( Gaffer.Application ) :
 		Gaffer.Application.__init__(
 			self,
 			"""
-			A graphical user interface for editing node graphs. This is
-			the primary user facing Gaffer application.
+			MarketLab — a graphical user interface for editing node graphs.
+			Based on Gaffer; Phase 0 focuses on the graph editor without production render tooling.
 			"""
 		)
 

@@ -36,6 +36,7 @@
 
 import os
 import pathlib
+import sys
 import unittest
 import imath
 
@@ -48,7 +49,18 @@ import GafferImage
 import GafferScene
 import GafferSceneTest
 
+def __skipOpenGLTestsForLocalWindows() :
+	"""Set GAFFER_SKIP_WINDOWS_GL_TESTS=1 when hybrid-GPU/driver issues break OpenGL headless/context creation."""
+	return (
+		sys.platform == "win32" and os.environ.get( "GAFFER_SKIP_WINDOWS_GL_TESTS", "" ).strip().lower()
+		in ( "1", "true", "yes", "on" )
+	)
+
 @unittest.skipIf( GafferTest.inCI(), "OpenGL not set up" )
+@unittest.skipIf(
+	__skipOpenGLTestsForLocalWindows(),
+	"Skipping OpenGL tests because GAFFER_SKIP_WINDOWS_GL_TESTS is set (unset it to run them locally)",
+)
 class OpenGLRenderTest( GafferSceneTest.RenderTest ) :
 
 	renderer = "OpenGL"

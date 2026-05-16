@@ -1297,7 +1297,7 @@ ImageSpec createImageSpec( const ImageWriter *node, const ImageOutput *out, cons
 	setImageSpecTilingAndCompressionOptions( node, &spec, fileFormatName );
 
 	// Add common attribs to the spec
-	spec.attribute( "Software", std::string( "Gaffer " ) + Gaffer::versionString() );
+	spec.attribute( "Software", std::string( "MarketLab " ) + Gaffer::versionString() );
 #ifndef _MSC_VER
 	struct utsname info;
 	if ( !uname( &info ) )

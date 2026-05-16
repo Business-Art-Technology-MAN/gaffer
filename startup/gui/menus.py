@@ -48,12 +48,16 @@ import GafferUI
 import GafferDispatchUI
 import GafferSceneUI
 
+# MarketLab Phase 0 — hide third-party renderer menus and render/catalogue shortcuts.
+# Set to False to restore stock Gaffer-style menus (modules must still be present).
+_marketLabPhase0UI = True
+
 # ScriptWindow menu
 ##########################################################################
 
 scriptWindowMenu = GafferUI.ScriptWindow.menuDefinition( application )
 
-GafferUI.ApplicationMenu.appendDefinitions( scriptWindowMenu, prefix="/Gaffer" )
+GafferUI.ApplicationMenu.appendDefinitions( scriptWindowMenu, prefix="/MarketLab" )
 GafferUI.FileMenu.appendDefinitions( scriptWindowMenu, prefix="/File" )
 GafferUI.EditMenu.appendDefinitions( scriptWindowMenu, prefix="/Edit" )
 GafferUI.LayoutMenu.appendDefinitions( scriptWindowMenu, name="/Layout" )
@@ -116,7 +120,7 @@ GafferSceneUI.ShaderUI.hideShaders( IECore.PathMatcher( [ "Pattern/ColorSpline.o
 
 # Arnold nodes
 
-if moduleSearchPath.find( "arnold" ) :
+if moduleSearchPath.find( "arnold" ) and not _marketLabPhase0UI :
 
 	try :
 
@@ -147,7 +151,7 @@ if moduleSearchPath.find( "arnold" ) :
 
 # 3delight nodes
 
-if moduleSearchPath.find( "nsi.py" ) and moduleSearchPath.find( "GafferDelight" ) :
+if moduleSearchPath.find( "nsi.py" ) and moduleSearchPath.find( "GafferDelight" ) and not _marketLabPhase0UI :
 
 	try :
 
@@ -209,7 +213,7 @@ if moduleSearchPath.find( "nsi.py" ) and moduleSearchPath.find( "GafferDelight" 
 
 # Cycles nodes
 
-if os.environ.get( "CYCLES_ROOT" ) and moduleSearchPath.find( "GafferCycles" ) :
+if os.environ.get( "CYCLES_ROOT" ) and moduleSearchPath.find( "GafferCycles" ) and not _marketLabPhase0UI :
 
 	try :
 
@@ -233,6 +237,7 @@ if os.environ.get( "CYCLES_ROOT" ) and moduleSearchPath.find( "GafferCycles" ) :
 # RenderMan nodes
 
 if (
+	not _marketLabPhase0UI and
 	"RMANTREE" in os.environ and
 	moduleSearchPath.find( "GafferRenderMan" ) and
 	os.environ.get( "GAFFERRENDERMAN_HIDE_UI", "" ) != "1"
@@ -364,13 +369,14 @@ nodeMenu.append( "/Scene/Utility/Shader Query", GafferScene.ShaderQuery, searchT
 nodeMenu.append( "/Scene/Utility/Option Query", GafferScene.OptionQuery, searchText = "OptionQuery" )
 nodeMenu.append( "/Scene/Utility/Primitive Variable Query", GafferScene.PrimitiveVariableQuery, searchText = "PrimitiveVariableQuery" )
 nodeMenu.append( "/Scene/Utility/Camera Query", GafferScene.CameraQuery, searchText = "CameraQuery" )
-nodeMenu.append( "/Scene/Passes/Render Passes", GafferScene.RenderPasses, searchText = "RenderPasses" )
-nodeMenu.append( "/Scene/Passes/Delete Render Passes", GafferScene.DeleteRenderPasses, searchText = "DeleteRenderPasses" )
-nodeMenu.append( "/Scene/Passes/Render Pass Wedge", GafferScene.RenderPassWedge, searchText = "RenderPassWedge" )
-nodeMenu.append( "/Scene/Passes/Render Pass Shader", GafferScene.RenderPassShader, searchText = "RenderPassShader" )
-nodeMenu.append( "/Scene/Passes/Shuffle Render Passes", GafferScene.ShuffleRenderPasses, searchText = "ShuffleRenderPasses" )
-nodeMenu.append( "/Scene/Render/Render", GafferScene.Render )
-nodeMenu.append( "/Scene/Render/Interactive Render", GafferScene.InteractiveRender, searchText = "InteractiveRender" )
+if not _marketLabPhase0UI :
+	nodeMenu.append( "/Scene/Passes/Render Passes", GafferScene.RenderPasses, searchText = "RenderPasses" )
+	nodeMenu.append( "/Scene/Passes/Delete Render Passes", GafferScene.DeleteRenderPasses, searchText = "DeleteRenderPasses" )
+	nodeMenu.append( "/Scene/Passes/Render Pass Wedge", GafferScene.RenderPassWedge, searchText = "RenderPassWedge" )
+	nodeMenu.append( "/Scene/Passes/Render Pass Shader", GafferScene.RenderPassShader, searchText = "RenderPassShader" )
+	nodeMenu.append( "/Scene/Passes/Shuffle Render Passes", GafferScene.ShuffleRenderPasses, searchText = "ShuffleRenderPasses" )
+	nodeMenu.append( "/Scene/Render/Render", GafferScene.Render )
+	nodeMenu.append( "/Scene/Render/Interactive Render", GafferScene.InteractiveRender, searchText = "InteractiveRender" )
 
 # Image nodes
 
@@ -432,8 +438,9 @@ nodeMenu.append( "/Image/Utility/Shuffle Metadata", GafferImage.ShuffleImageMeta
 nodeMenu.append( "/Image/Utility/Metadata Overlay", GafferImage.MetadataOverlay, searchText = "MetadataOverlay" )
 nodeMenu.append( "/Image/Utility/Stats", GafferImage.ImageStats, searchText = "ImageStats" )
 nodeMenu.append( "/Image/Utility/Sampler", GafferImage.ImageSampler, searchText = "ImageSampler" )
-nodeMenu.append( "/Scene/Catalogue/Catalogue", GafferScene.Catalogue )
-nodeMenu.append( "/Scene/Catalogue/Catalogue Select", GafferScene.CatalogueSelect )
+if not _marketLabPhase0UI :
+	nodeMenu.append( "/Scene/Catalogue/Catalogue", GafferScene.Catalogue )
+	nodeMenu.append( "/Scene/Catalogue/Catalogue Select", GafferScene.CatalogueSelect )
 nodeMenu.append( "/Image/Utility/FormatQuery", GafferImage.FormatQuery )
 nodeMenu.append( "/Image/Utility/DataWindowQuery", GafferImage.DataWindowQuery )
 nodeMenu.append( "/Image/Utility/OpenColorIO Context", GafferImage.OpenColorIOContext, searchText = "OpenColorIOContext" )

@@ -1,0 +1,61 @@
+#! /bin/bash
+##########################################################################
+#
+#  MarketLab launcher — same entry point as `gaffer`; UI branding differs.
+#
+##########################################################################
+
+set -e
+
+if [[ $1 == -psn_0_* ]] ; then
+	shift
+fi
+
+thisScript=$0
+while [[ -L $thisScript ]]
+do
+	cd "`dirname "$thisScript"`"
+	thisScript=`basename "$thisScript"`
+	thisScript=`readlink "$thisScript"`
+done
+
+cd "`dirname "$thisScript"`"
+binDir=`pwd -P`
+rootDir="`dirname "$binDir"`"
+
+function prependToPath {
+
+	if [[ ":${!2}:" != *":$1:"* ]] ; then
+
+		if [[ ${!2} ]] ; then
+			eval "export $2=\"$1:${!2}\""
+		else
+			eval "export $2=\"$1\""
+		fi
+
+	fi
+
+}
+
+prependToPath "$rootDir/bin" PATH
+
+if [[ `uname` = "Linux" ]] ; then
+	prependToPath "$rootDir/lib" LD_LIBRARY_PATH
+else
+	prependToPath "$rootDir/lib" DYLD_FRAMEWORK_PATH
+fi
+
+unset PYTHONHOME
+
+if [[ -n $GAFFER_DEBUG ]] ; then
+	if [[ -z $GAFFER_DEBUGGER ]] ; then
+		if [[ `uname` = "Linux" ]] ; then
+			export GAFFER_DEBUGGER="gdb --args"
+		else
+			export GAFFER_DEBUGGER="lldb -- "
+		fi
+	fi
+	exec $GAFFER_DEBUGGER $rootDir/bin/__private/gaffer "$rootDir/bin/__private/_gaffer.py" "$@"
+else
+	exec $rootDir/bin/__private/gaffer "$rootDir/bin/__private/_gaffer.py" "$@"
+fi

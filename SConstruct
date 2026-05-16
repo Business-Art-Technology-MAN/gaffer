@@ -436,6 +436,13 @@ for path in [
 
 env["BUILD_DIR"] = os.path.abspath( env["BUILD_DIR"] )
 
+# Prebuilt Windows dependencies ship GLEW import libraries as `glew32.lib` (see the GLEW CMake
+# `IMPORTED_IMPLIB_RELEASE`). SCons emits `gleW$GLEW_LIB_SUFFIX.lib` from `LIBS`; without a suffix this
+# becomes `GLEW.lib`, which does not exist. `GLEW32` matches `glew32.lib` on typical NTFS.
+if env["PLATFORM"] == "win32" :
+	if env["GLEW_LIB_SUFFIX"] == "" :
+		env["GLEW_LIB_SUFFIX"] = "32"
+
 for e in env["ENV_VARS_TO_IMPORT"].split() :
 	if e in os.environ :
 		env["ENV"][e] = os.environ[e]
@@ -1595,7 +1602,12 @@ libraries = {
 
 }
 
-libraries["scripts"]["additionalFiles"].append( "bin/gaffer.cmd" if env["PLATFORM"] == "win32" else "bin/gaffer" )
+libraries["scripts"]["additionalFiles"].extend(
+	[
+		"bin/gaffer.cmd" if env["PLATFORM"] == "win32" else "bin/gaffer",
+		"bin/MarketLab.cmd" if env["PLATFORM"] == "win32" else "bin/marketlab",
+	]
+)
 
 # Add on OpenGL libraries to definitions - these vary from platform to platform
 for library in ( "GafferUI", "GafferScene", "GafferSceneUI", "GafferImageUI" ) :
@@ -1684,7 +1696,18 @@ if env["PLATFORM"] == "win32" :
 		if os.path.isdir( source ) or os.path.isdir( dest ) :
 			raise RuntimeError( "Cannot copy {} to {}. Source and destination cannot be directories.".format( source, dest ) )
 
-		fileInfo = runCommand( "git ls-files -s {}".format( source ) ).split()
+		# `git` may be missing, misconfigured, or the checkout may lack a usable `.git`;
+		# fall back to a plain copy (symlink-detection applies only when `git ls-files` works).
+		try :
+			fileInfoStr = subprocess.check_output(
+				commandEnv.subst( "git ls-files -s {}".format( source ) ),
+				shell = True,
+				env = commandEnv["ENV"],
+				universal_newlines = True,
+			).strip()
+			fileInfo = fileInfoStr.split()
+		except subprocess.CalledProcessError :
+			fileInfo = []
 
 		if len( fileInfo ) == 4 or len( fileInfo ) == 5:
 

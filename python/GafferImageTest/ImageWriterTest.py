@@ -514,7 +514,7 @@ class ImageWriterTest( GafferImageTest.ImageTestCase ) :
 				expectedMetadata["DateTime"] = writerMetadata["DateTime"]
 
 			# the writer adds several standard attributes that aren't in the original file
-			expectedMetadata["Software"] = IECore.StringData( "Gaffer " + Gaffer.About.versionString() )
+			expectedMetadata["Software"] = IECore.StringData( Gaffer.About.name() + " " + Gaffer.About.versionString() )
 			expectedMetadata["HostComputer"] = IECore.StringData( platform.node() )
 			expectedMetadata["Artist"] = IECore.StringData( os.environ.get("USER") or os.environ["USERNAME"] ) #Linux or windows
 			expectedMetadata["DocumentName"] = IECore.StringData( "untitled" )
@@ -839,7 +839,7 @@ class ImageWriterTest( GafferImageTest.ImageTestCase ) :
 
 		expectedMetadata = regularMetadata["out"]["metadata"].getValue()
 		expectedMetadata["DateTime"] = regularReaderMetadata["DateTime"]
-		expectedMetadata["Software"] = IECore.StringData( "Gaffer " + Gaffer.About.versionString() )
+		expectedMetadata["Software"] = IECore.StringData( Gaffer.About.name() + " " + Gaffer.About.versionString() )
 		expectedMetadata["HostComputer"] = IECore.StringData( platform.node() )
 		expectedMetadata["Artist"] = IECore.StringData( os.environ.get("USER") or os.environ["USERNAME"] ) #Linux or windows
 		expectedMetadata["DocumentName"] = IECore.StringData( "untitled" )
