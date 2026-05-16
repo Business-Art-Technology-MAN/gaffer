@@ -75,6 +75,7 @@
 #include "SwitchBinding.h"
 #include "Transform2DPlugBinding.h"
 #include "TransformPlugBinding.h"
+#include "MarketDataPlugsBinding.h"
 #include "TypedObjectPlugBinding.h"
 #include "TypedPlugBinding.h"
 #include "UndoScopeBinding.h"
@@ -158,6 +159,7 @@ BOOST_PYTHON_MODULE( _Gaffer )
 	bindBoxPlug();
 	bindExpression();
 	bindTransformPlug();
+	bindMarketDataPlugs();
 	bindTransform2DPlug();
 	bindCompoundDataPlug();
 	bindRandom();

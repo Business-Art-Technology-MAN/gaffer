@@ -156,6 +156,11 @@ enum TypeId
 	PatternMatchTypeId = 118110,
 	Int64VectorDataPlugTypeId = 118111,
 
+	SeriesPlugTypeId = 118112,
+	SignalClosurePlugTypeId = 118113,
+	WeightVectorPlugTypeId = 118114,
+	MarketContextPlugTypeId = 118115,
+
 	LastTypeId = 118799
 
 };

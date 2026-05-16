@@ -1,0 +1,153 @@
+//////////////////////////////////////////////////////////////////////////
+//
+//  Copyright (c) 2026, MarketLab / PCE fork. All rights reserved.
+//
+//////////////////////////////////////////////////////////////////////////
+
+#include "boost/python.hpp"
+
+#include "MarketDataPlugsBinding.h"
+
+#include "GafferBindings/PlugBinding.h"
+#include "GafferBindings/SerialisationBinding.h"
+#include "GafferBindings/ValuePlugBinding.h"
+
+#include "Gaffer/MarketContextPlug.h"
+#include "Gaffer/SeriesPlug.h"
+#include "Gaffer/SignalClosurePlug.h"
+#include "Gaffer/WeightVectorPlug.h"
+
+#include "fmt/format.h"
+
+using namespace boost::python;
+using namespace GafferBindings;
+using namespace Gaffer;
+
+namespace
+{
+
+std::string basicPlugRepr( const char *pythonClassName, const ValuePlug *plug )
+{
+	std::string result = fmt::format( "Gaffer.{}( \"{}\"", pythonClassName, plug->getName().string() );
+	if( plug->direction() != Plug::In )
+	{
+		result += ", direction = " + PlugSerialiser::directionRepr( plug->direction() );
+	}
+	const unsigned flags = plug->getFlags();
+	if( flags != Plug::Default )
+	{
+		result += ", flags = " + PlugSerialiser::flagsRepr( flags );
+	}
+	result += " )";
+	return result;
+}
+
+#define MARKET_PLUG_SERIALISER( PLUGTYPE, PYTHONNAME ) \
+	class PLUGTYPE##Serialiser : public ValuePlugSerialiser \
+	{ \
+		public : \
+			bool childNeedsConstruction( const Gaffer::GraphComponent *child, const Serialisation &serialisation ) const override \
+			{ \
+				return false; \
+			} \
+			std::string constructor( const Gaffer::GraphComponent *graphComponent, Serialisation &serialisation ) const override \
+			{ \
+				(void)serialisation; \
+				return basicPlugRepr( PYTHONNAME, static_cast<const PLUGTYPE *>( graphComponent ) ); \
+			} \
+	};
+
+MARKET_PLUG_SERIALISER( SeriesPlug, "SeriesPlug" )
+MARKET_PLUG_SERIALISER( SignalClosurePlug, "SignalClosurePlug" )
+MARKET_PLUG_SERIALISER( WeightVectorPlug, "WeightVectorPlug" )
+MARKET_PLUG_SERIALISER( MarketContextPlug, "MarketContextPlug" )
+
+#undef MARKET_PLUG_SERIALISER
+
+} // namespace
+
+void GafferModule::bindMarketDataPlugs()
+{
+	PlugClass<SeriesPlug>()
+		.def(
+			init<const std::string &, Plug::Direction, unsigned>(
+				(
+					arg( "name" ) = GraphComponent::defaultName<SeriesPlug>(),
+					arg( "direction" ) = Plug::In,
+					arg( "flags" ) = Plug::Default
+				)
+			)
+		)
+		.def( "timesPlug", static_cast<Int64VectorDataPlug *(SeriesPlug::*)()>( &SeriesPlug::timesPlug ), return_value_policy<reference_existing_object>() )
+		.def( "valuesPlug", static_cast<FloatVectorDataPlug *(SeriesPlug::*)()>( &SeriesPlug::valuesPlug ), return_value_policy<reference_existing_object>() )
+	;
+	Serialisation::registerSerialiser( SeriesPlug::staticTypeId(), new SeriesPlugSerialiser );
+
+	PlugClass<SignalClosurePlug>()
+		.def(
+			init<const std::string &, Plug::Direction, float, float, float, float, const std::string &, bool, unsigned>(
+				(
+					arg( "name" ) = GraphComponent::defaultName<SignalClosurePlug>(),
+					arg( "direction" ) = Plug::In,
+					arg( "defaultAlphaWeight" ) = 0.0f,
+					arg( "defaultConfidence" ) = 0.0f,
+					arg( "defaultHalfLife" ) = 0.0f,
+					arg( "defaultMaxImpactFrac" ) = 0.0f,
+					arg( "defaultRegimeCondition" ) = std::string(),
+					arg( "defaultSideBet" ) = false,
+					arg( "flags" ) = Plug::Default
+				)
+			)
+		)
+		.def( "alphaWeightPlug", static_cast<FloatPlug *(SignalClosurePlug::*)()>( &SignalClosurePlug::alphaWeightPlug ), return_value_policy<reference_existing_object>() )
+		.def( "confidencePlug", static_cast<FloatPlug *(SignalClosurePlug::*)()>( &SignalClosurePlug::confidencePlug ), return_value_policy<reference_existing_object>() )
+		.def( "halfLifePlug", static_cast<FloatPlug *(SignalClosurePlug::*)()>( &SignalClosurePlug::halfLifePlug ), return_value_policy<reference_existing_object>() )
+		.def( "maxImpactFracPlug", static_cast<FloatPlug *(SignalClosurePlug::*)()>( &SignalClosurePlug::maxImpactFracPlug ), return_value_policy<reference_existing_object>() )
+		.def( "regimeConditionPlug", static_cast<StringPlug *(SignalClosurePlug::*)()>( &SignalClosurePlug::regimeConditionPlug ), return_value_policy<reference_existing_object>() )
+		.def( "sideBetPlug", static_cast<BoolPlug *(SignalClosurePlug::*)()>( &SignalClosurePlug::sideBetPlug ), return_value_policy<reference_existing_object>() )
+	;
+	Serialisation::registerSerialiser( SignalClosurePlug::staticTypeId(), new SignalClosurePlugSerialiser );
+
+	PlugClass<WeightVectorPlug>()
+		.def(
+			init<const std::string &, Plug::Direction, unsigned>(
+				(
+					arg( "name" ) = GraphComponent::defaultName<WeightVectorPlug>(),
+					arg( "direction" ) = Plug::In,
+					arg( "flags" ) = Plug::Default
+				)
+			)
+		)
+		.def( "instrumentIdsPlug", static_cast<StringVectorDataPlug *(WeightVectorPlug::*)()>( &WeightVectorPlug::instrumentIdsPlug ), return_value_policy<reference_existing_object>() )
+		.def( "targetWeightsPlug", static_cast<FloatVectorDataPlug *(WeightVectorPlug::*)()>( &WeightVectorPlug::targetWeightsPlug ), return_value_policy<reference_existing_object>() )
+		.def( "confidencesPlug", static_cast<FloatVectorDataPlug *(WeightVectorPlug::*)()>( &WeightVectorPlug::confidencesPlug ), return_value_policy<reference_existing_object>() )
+		.def( "grossExposurePlug", static_cast<FloatPlug *(WeightVectorPlug::*)()>( &WeightVectorPlug::grossExposurePlug ), return_value_policy<reference_existing_object>() )
+		.def( "netExposurePlug", static_cast<FloatPlug *(WeightVectorPlug::*)()>( &WeightVectorPlug::netExposurePlug ), return_value_policy<reference_existing_object>() )
+		.def( "activeRegimePlug", static_cast<StringPlug *(WeightVectorPlug::*)()>( &WeightVectorPlug::activeRegimePlug ), return_value_policy<reference_existing_object>() )
+		.def( "evaluatedAtPlug", static_cast<StringPlug *(WeightVectorPlug::*)()>( &WeightVectorPlug::evaluatedAtPlug ), return_value_policy<reference_existing_object>() )
+	;
+	Serialisation::registerSerialiser( WeightVectorPlug::staticTypeId(), new WeightVectorPlugSerialiser );
+
+	PlugClass<MarketContextPlug>()
+		.def(
+			init<const std::string &, Plug::Direction, const std::string &, const std::string &, float, float, float, unsigned>(
+				(
+					arg( "name" ) = GraphComponent::defaultName<MarketContextPlug>(),
+					arg( "direction" ) = Plug::In,
+					arg( "defaultTimeNanoseconds" ) = std::string(),
+					arg( "defaultMacroRegime" ) = std::string(),
+					arg( "defaultVixLevel" ) = 0.0f,
+					arg( "defaultTermSpread" ) = 0.0f,
+					arg( "defaultCreditSpread" ) = 0.0f,
+					arg( "flags" ) = Plug::Default
+				)
+			)
+		)
+		.def( "timeNanosecondsPlug", static_cast<StringPlug *(MarketContextPlug::*)()>( &MarketContextPlug::timeNanosecondsPlug ), return_value_policy<reference_existing_object>() )
+		.def( "macroRegimePlug", static_cast<StringPlug *(MarketContextPlug::*)()>( &MarketContextPlug::macroRegimePlug ), return_value_policy<reference_existing_object>() )
+		.def( "vixLevelPlug", static_cast<FloatPlug *(MarketContextPlug::*)()>( &MarketContextPlug::vixLevelPlug ), return_value_policy<reference_existing_object>() )
+		.def( "termSpreadPlug", static_cast<FloatPlug *(MarketContextPlug::*)()>( &MarketContextPlug::termSpreadPlug ), return_value_policy<reference_existing_object>() )
+		.def( "creditSpreadPlug", static_cast<FloatPlug *(MarketContextPlug::*)()>( &MarketContextPlug::creditSpreadPlug ), return_value_policy<reference_existing_object>() )
+	;
+	Serialisation::registerSerialiser( MarketContextPlug::staticTypeId(), new MarketContextPlugSerialiser );
+}
