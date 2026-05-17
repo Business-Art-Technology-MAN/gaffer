@@ -10,6 +10,16 @@ TOTAL ESTIMATED DURATION:  14–18 WEEKS
 
 Single AI coding agent (Claude Code or equivalent) · Human architect oversight
 
+## Implementation status (MarketLab / PCE fork)
+
+**Snapshot: 2026-05-16.** Trackers: [`PCE_Phase2a_Progress.md`](PCE_Phase2a_Progress.md) (M1–M3), [`PCE_Phase2_MilestoneTracker.md`](PCE_Phase2_MilestoneTracker.md) (M4–M10).
+
+| Phase | Status | Summary |
+| --- | --- | --- |
+| **Phase 1** — OTL plugs | **Done (current scope)** | C++ **`SeriesPlug`** (parallel **`Int64VectorData`** `times` + **`FloatVectorData`** `values`), **`SignalClosurePlug`**, **`WeightVectorPlug`**, **`MarketContextPlug`**; `GafferModule` bindings, serialisers, **`MarketDataMetadata`**, **`MarketDataAlgo`** (JSON dict interchange), **`GafferTest/MarketDataPlugsTest`**. *Plan delta:* not USD per-sample `timeSamples` on one float vector; `MarketContext` is a plug type, not a separate injected struct. |
+| **Phase 2** — Layer 1–2 nodes | **Substantially complete (script/UI)** | **Done:** prior rows + **`PceGraphIO`** (`.pce` **PCE-GRAPH/1** envelope) + **ArcticDB read** on `TimeSeriesStoreNode`. Tracker: [`PCE_FileFormat_And_Backends.md`](PCE_FileFormat_And_Backends.md). **Still deferred:** **`IVSurfaceNode`/`SurfacePlug`**, **`PCALoadingsNode`**, **`KyleLambdaNode`**, full live APIs, dedicated **`VectorPlug`/`MatrixPlug`**, **USD-native** `.pce` (Phase 6). |
+| **Phase 3 onward** | Not started | Regimes through integration per sections below. |
+
 # 1  The Honest Estimate
 
 Before the plan: a calibrated assessment of what an AI coding agent can and cannot do on this codebase, and where the real risks live.
@@ -20,7 +30,7 @@ Before the plan: a calibrated assessment of what an AI coding agent can and cann
 
 - Writing Python extensions — the Layer 2–5 financial logic (factor shaders, regime classifiers, portfolio aggregator) is pure Python plugging into Gaffer's existing Python API. This is the AI agent's strongest surface.
 
-- Writing typed plugs and compute nodes in C++ — these are formulaic. SeriesPlug, SignalClosurePlug, WeightVectorPlug all follow the same docstring-to-implementation pattern.
+- Writing typed plugs and compute nodes in C++ — these are formulaic. SeriesPlug, SignalClosurePlug, WeightVectorPlug, and MarketContextPlug all follow the same docstring-to-implementation pattern.
 
 - Writing OTL shader files (.otl) — once the grammar is defined, generating standard library shader implementations is highly parallelisable and well-suited to an AI agent.
 
@@ -78,10 +88,10 @@ The most important phase. Nothing else can start until Gaffer builds cleanly and
 
 # 3  Phase 1 — Core OTL Data Types
 
-**Phase 1 — New Typed Plugs: SeriesPlug, SignalClosurePlug, WeightVectorPlug** · *4–7 days*
+**Phase 1 — New Typed Plugs: SeriesPlug, SignalClosurePlug, WeightVectorPlug, MarketContextPlug** · *4–7 days*
 
 
-Three new C++ typed plugs are the structural foundation of the entire OTL pipeline. Every subsequent phase connects to these. They must be correct before anything else is built.
+Four C++ compound typed plugs (including OTL market context) are the structural foundation of the OTL pipeline; subsequent phases connect to these. They must be correct before anything else is built.
 
 | Task | AI Agent Action | Complexity |
 | --- | --- | --- |
@@ -92,11 +102,15 @@ Three new C++ typed plugs are the structural foundation of the entire OTL pipeli
 | Type registration | Register all new types with Gaffer's TypeRegistry and IECore's RunTimeTyped system. Python bindings. Verify serialisation round-trip. | High |
 | Unit tests | Test serialisation, default values, connection type-checking (SeriesPlug rejects SignalClosurePlug connections), Python API. Follow GafferTest patterns exactly. | Low |
 
-> Phase 1 exit criterion All three plug types build, serialise cleanly, have Python bindings, and pass unit tests. The type-checking system rejects incorrect connections at the UI layer.
+> Phase 1 exit criterion Core OTL plug types build, serialise cleanly, have Python bindings, and pass unit tests. The type-checking system rejects incorrect connections at the UI layer.
+
+**Implementation (2026-05-16):** Exit criterion met for **`SeriesPlug`**, **`SignalClosurePlug`**, **`WeightVectorPlug`**, and **`MarketContextPlug`** (fourth compound plug added for OTL context). Build + **`GafferTest/MarketDataPlugsTest`** on CI / local install.
 
 # 4  Phase 2 — Layer 1 and 2 Nodes
 
 **Phase 2 — Data Shaders and Factor Shaders** · *5–8 days*
+
+Incremental delivery for the thin **Phase 2a** slice (compound `SeriesPlug` compute first, stores later) is tracked in [`SRD/PCE_Phase2a_Progress.md`](PCE_Phase2a_Progress.md). The **full Phase 2 backlog** (M4+) lives in [`SRD/PCE_Phase2_MilestoneTracker.md`](PCE_Phase2_MilestoneTracker.md).
 
 
 The first nodes that appear in the PCE node graph. All Layer 1 nodes output SeriesPlug. All Layer 2 nodes consume SeriesPlugs and output SeriesPlugs or floats. No signal logic appears here.
@@ -111,6 +125,8 @@ The first nodes that appear in the PCE node graph. All Layer 1 nodes output Seri
 | CrossSectionNode (Python) | Fetches matrix of returns across instrument universe. Output: new MatrixPlug type. Required for Avramov-He connection matrix. | Medium |
 | FactorSeriesNode (Python) | Fetches Fama-French / AQR factor return series from FactorStore. Backed by Ken French data library download or local Parquet. | Low |
 
+**As of 2026-05-16:** **`ConstantSeriesNode`** (synthetic `SeriesPlug`) and **`SeriesCsvReaderNode`** (CSV → `SeriesPlug`; Windows path handling uses **`NoSubstitutions`** on path plugs) are implemented in addition to the stub **`TimeSeriesStoreNode`** above. **`MarketVarNode`** (macro registry / CSV / Parquet) and **`FactorSeriesNode`** (factor registry / CSV / Parquet) extend Layer 1; **`CrossSectionNode`** outputs a numeric panel via **`rowTimes`**, **`valuesRowMajor`**, **`numColumns`**.
+
 ### Layer 2 — Factor Shader Nodes
 
 | Task | AI Agent Action | Complexity |
@@ -123,6 +139,8 @@ The first nodes that appear in the PCE node graph. All Layer 1 nodes output Seri
 | ConnectionMatrixNode (Python) | Avramov-He cross-asset OLS. Input: MatrixPlug universe_returns. Output: MatrixPlug lambda_mat. Most compute-intensive Layer 2 node. | Medium |
 
 > Phase 2 exit criterion A complete Layer 1→2 pipeline builds in the node graph: a TimeSeriesStoreNode fetching AAPL close prices flows through RollingReturnsNode and RealizedVolNode. Results visible in the Python console. All nodes serialise and restore from a .pce file.
+
+**Implementation (2026-05-16, updated):** Partially met for **script serialisation** (`ScriptNode.serialise` / `execute`) on the nodes above; **`.pce` / USD stage** persistence not wired (M10 file format). **TimeSeriesStoreNode** is a **stub** (memory + Parquet, not live ArcticDB). **`SeriesCsvReaderNode`** covers file-based Layer 1 data for dev **until** store/backends are complete. **Layer 1–2 extensions:** **`MarketVarNode`** / **`FactorSeriesNode`** / **`CrossSectionNode`**; rolling FF **three-`SeriesPlug`** betas + **`ConnectionMatrixNode`** on row-major panels (no dedicated **MatrixPlug** type yet).
 
 # 5  Phase 3 — Layer 3 Regime Shader Nodes
 

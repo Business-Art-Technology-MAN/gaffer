@@ -160,6 +160,20 @@ from .HiddenFilePathFilterTest import HiddenFilePathFilterTest
 from .ContextVariableTweaksTest import ContextVariableTweaksTest
 from .OptionalValuePlugTest import OptionalValuePlugTest
 from .MarketDataPlugsTest import MarketDataPlugsTest
+from .ConstantSeriesNodeTest import ConstantSeriesNodeTest
+from .RollingReturnsNodeTest import RollingReturnsNodeTest
+from .RealizedVolNodeTest import RealizedVolNodeTest
+from .SeriesCsvReaderNodeTest import SeriesCsvReaderNodeTest
+from .TimeSeriesStoreNodeTest import TimeSeriesStoreNodeTest
+from .MarketPhase2ExtendedTest import (
+	ConnectionMatrixNodeTest,
+	CrossSectionNodeTest,
+	FactorSeriesNodeTest,
+	FamaFrenchLoadingsNodeTest,
+	MarketVarNodeTest,
+	Phase2PipelineScriptTest,
+)
+from .PceGraphIOTest import PceGraphIOTest
 from .ThreadMonitorTest import ThreadMonitorTest
 from .CollectTest import CollectTest
 from .ProcessTest import ProcessTest
