@@ -39,6 +39,16 @@
 
 ---
 
+## Reference — rolling PCA graph
+
+Wire a **panel** into a **`MatrixPlug`**, then PCA:
+
+1. **Panel** → **`PackMatrixNode`**: assign **`panelRowTimes`**, **`panelValuesRowMajor`**, **`panelNumColumns`** (same semantics as **`CrossSectionNode`** outputs).
+2. **`pack.out`** → **`PCALoadingsNode.in`** (`MatrixPlug` → `MatrixPlug`).
+3. **`PCALoadingsNode`** outputs: **`loadings`** and **`varianceExplained`** (`VectorPlug`), **`pc1Scores`** (`SeriesPlug`, trailing-window PC1 score on the newest row).
+
+---
+
 ## D — Phase 6 boundary (do not confuse with M10)
 
 **M10 / `PCE-USD/1`** = USD **layer** with graph payload in **`customLayerData`** and **`/PCE`** placeholder.
@@ -49,9 +59,17 @@ Track Phase 6 work in the main plan / a dedicated Phase 6 doc when that slice st
 
 ---
 
-## Suggested order
+## Immediate next (after N8–N10 merge)
 
-1. **N8–N10** shipped (**`ScalarPlug`**, **`VectorPlug`/`MatrixPlug`**, **`PackMatrixNode`**, **`PCALoadingsNode`**). Optional: connect **`CrossSectionNode` → `PackMatrixNode` → `PCALoadingsNode`** in examples or extend **M8/M9** to prefer the new plugs.
+1. **Merge & CI:** Land **`marketlab/phase2-layer1-2`** after review; rerun **`MarketLab.cmd test`** on **`GafferTest.MarketDataPlugsTest`**, **`GafferTest.PCALoadingsNodeTest`**, **`GafferTest.Phase2ExitCriterionTest`**, **`RealizedVolNodeTest`**, **`KyleLambdaNodeTest`**, **`IVSurfaceNodeTest`** on the merged build when verifying releases.
+2. **Optional refactor:** Rewire **M8/M9** nodes (**`FamaFrenchLoadingsNode`**, **`CrossSectionNode`**, etc.) to prefer **`VectorPlug`/`MatrixPlug`** where it simplifies scripts.
+3. **Backlog:** Arctic **on-graph** publish nodes (beyond **`ArcticBackend`** helpers), richer **live vendors** than HTTP CSV + FRED, then **Phase 6** portfolio USD — [PCE_OTL_ProjectPlan_v2.md](PCE_OTL_ProjectPlan_v2.md) §8.
+
+---
+
+## Tech debt note (compound connections)
+
+**Resolved:** `ValuePlug::acceptsInput` uses **`typeId()`** (not `ValuePlug::staticTypeId()`), with **`Plug::acceptsInput`** as the first check in numeric/string/`TypedObjectPlug` specialisations so promotions still work. No additional **`Plug::acceptsInputInternal`** child-count symmetry was required once that landed.
 
 ---
 
@@ -65,3 +83,4 @@ Track Phase 6 work in the main plan / a dedicated Phase 6 doc when that slice st
 | 2026-05-16 | **N7:** `KyleLambdaNode` + `MarketMath.rolling_kyle_lambda_proxy`; `KyleLambdaNodeTest`. |
 | 2026-05-16 | **N6:** `SurfacePlug` + `IVSurfaceNode` (memory + CSV), `MarketDataSurfaces`, `MarketDataIO.read_iv_surface_long_csv`. |
 | 2026-05-18 | **N8–N10:** `ScalarPlug`; `VectorPlug` / `MatrixPlug` + bindings; `PackMatrixNode`, `PCALoadingsNode`, `MarketMath` PCA helpers; `MarketDataPlugsTest` (incl. `PCALoadingsNodeTest`); `RealizedVolNode` / `KyleLambdaNode` `out` = `ScalarPlug`. |
+| 2026-05-18 | **Reference graph:** § rolling PCA (`PackMatrixNode` → `PCALoadingsNode`); § immediate next (merge/CI, optional M8/M9 refactor, backlog); § tech debt note on `ValuePlug::acceptsInput`. |
