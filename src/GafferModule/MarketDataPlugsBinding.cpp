@@ -14,6 +14,8 @@
 
 #include "Gaffer/MarketContextPlug.h"
 #include "Gaffer/MatrixPlug.h"
+#include "Gaffer/RegimePlug.h"
+#include "Gaffer/VolRegimePlug.h"
 #include "Gaffer/SeriesPlug.h"
 #include "Gaffer/SignalClosurePlug.h"
 #include "Gaffer/SurfacePlug.h"
@@ -67,6 +69,8 @@ MARKET_PLUG_SERIALISER( MarketContextPlug, "MarketContextPlug" )
 MARKET_PLUG_SERIALISER( SurfacePlug, "SurfacePlug" )
 MARKET_PLUG_SERIALISER( VectorPlug, "VectorPlug" )
 MARKET_PLUG_SERIALISER( MatrixPlug, "MatrixPlug" )
+MARKET_PLUG_SERIALISER( RegimePlug, "RegimePlug" )
+MARKET_PLUG_SERIALISER( VolRegimePlug, "VolRegimePlug" )
 
 #undef MARKET_PLUG_SERIALISER
 
@@ -203,4 +207,52 @@ void GafferModule::bindMarketDataPlugs()
 		.def( "numColumnsPlug", static_cast<IntPlug *(MatrixPlug::*)()>( &MatrixPlug::numColumnsPlug ), return_value_policy<reference_existing_object>() )
 	;
 	Serialisation::registerSerialiser( MatrixPlug::staticTypeId(), new MatrixPlugSerialiser );
+
+	PlugClass<RegimePlug>()
+		.def(
+			init<const std::string &, Plug::Direction, const std::string &, unsigned>(
+				(
+					arg( "name" ) = GraphComponent::defaultName<RegimePlug>(),
+					arg( "direction" ) = Plug::In,
+					arg( "defaultValue" ) = std::string( "ANY" ),
+					arg( "flags" ) = Plug::Default
+				)
+			)
+		)
+		.def(
+			init<const std::string &, Plug::Direction, unsigned>(
+				(
+					arg( "name" ) = GraphComponent::defaultName<RegimePlug>(),
+					arg( "direction" ) = Plug::In,
+					arg( "flags" ) = Plug::Default
+				)
+			)
+		)
+		.def( "valuePlug", static_cast<StringPlug *(RegimePlug::*)()>( &RegimePlug::valuePlug ), return_value_policy<reference_existing_object>() )
+	;
+	Serialisation::registerSerialiser( RegimePlug::staticTypeId(), new RegimePlugSerialiser );
+
+	PlugClass<VolRegimePlug>()
+		.def(
+			init<const std::string &, Plug::Direction, const std::string &, unsigned>(
+				(
+					arg( "name" ) = GraphComponent::defaultName<VolRegimePlug>(),
+					arg( "direction" ) = Plug::In,
+					arg( "defaultValue" ) = std::string( "VOL_NORMAL" ),
+					arg( "flags" ) = Plug::Default
+				)
+			)
+		)
+		.def(
+			init<const std::string &, Plug::Direction, unsigned>(
+				(
+					arg( "name" ) = GraphComponent::defaultName<VolRegimePlug>(),
+					arg( "direction" ) = Plug::In,
+					arg( "flags" ) = Plug::Default
+				)
+			)
+		)
+		.def( "valuePlug", static_cast<StringPlug *(VolRegimePlug::*)()>( &VolRegimePlug::valuePlug ), return_value_policy<reference_existing_object>() )
+	;
+	Serialisation::registerSerialiser( VolRegimePlug::staticTypeId(), new VolRegimePlugSerialiser );
 }

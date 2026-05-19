@@ -62,6 +62,10 @@ from . import ExtensionAlgo
 from .ConstantSeriesNode import ConstantSeriesNode
 from .RollingReturnsNode import RollingReturnsNode
 from .RealizedVolNode import RealizedVolNode
+from .ThresholdRegimeNode import ThresholdRegimeNode
+from .VolRegimeNode import VolRegimeNode
+from .CPRegimeNode import CPRegimeNode
+from .HMMRegimeNode import HMMRegimeNode
 from .KyleLambdaNode import KyleLambdaNode
 from .SeriesCsvReaderNode import SeriesCsvReaderNode
 from . import MarketDataTimeseries

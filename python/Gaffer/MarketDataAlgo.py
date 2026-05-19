@@ -8,7 +8,8 @@
 JSON-friendly dict interchange for Phase 1 OTL plugs (USD / layer storage helpers).
 
 Includes :class:`SeriesPlug`, :class:`SignalClosurePlug`, :class:`WeightVectorPlug`,
-:class:`MarketContextPlug`, :class:`SurfacePlug`, :class:`VectorPlug`, and :class:`MatrixPlug`.
+:class:`MarketContextPlug`, :class:`SurfacePlug`, :class:`VectorPlug`, :class:`MatrixPlug`,
+:class:`RegimePlug`, and :class:`VolRegimePlug`.
 
 These operate on plug *values* only; use :func:`json.dumps` / :func:`json.loads` at boundaries.
 """
@@ -160,3 +161,25 @@ def applyMatrixPlugDict( plug: Gaffer.MatrixPlug, d : Mapping[str, Any] ) -> Non
 		plug.valuesRowMajorPlug().setValue( IECore.FloatVectorData( list( d["valuesRowMajor"] ) ) )
 	if "numColumns" in d :
 		plug.numColumnsPlug().setValue( int( d["numColumns"] ) )
+
+
+def regimePlugToDict( plug: Gaffer.RegimePlug ) -> Dict[str, Any] :
+	return {
+		"value": plug.valuePlug().getValue(),
+	}
+
+
+def applyRegimePlugDict( plug: Gaffer.RegimePlug, d : Mapping[str, Any] ) -> None :
+	if "value" in d :
+		plug.valuePlug().setValue( str( d["value"] ) )
+
+
+def volRegimePlugToDict( plug: Gaffer.VolRegimePlug ) -> Dict[str, Any] :
+	return {
+		"value": plug.valuePlug().getValue(),
+	}
+
+
+def applyVolRegimePlugDict( plug: Gaffer.VolRegimePlug, d : Mapping[str, Any] ) -> None :
+	if "value" in d :
+		plug.valuePlug().setValue( str( d["value"] ) )

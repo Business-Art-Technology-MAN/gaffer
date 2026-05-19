@@ -164,6 +164,8 @@ enum TypeId
 	ScalarPlugTypeId = 118117,
 	VectorPlugTypeId = 118118,
 	MatrixPlugTypeId = 118119,
+	RegimePlugTypeId = 118120,
+	VolRegimePlugTypeId = 118121,
 
 	LastTypeId = 118799
 

@@ -163,6 +163,10 @@ from .MarketDataPlugsTest import MarketDataPlugsTest, PCALoadingsNodeTest
 from .ConstantSeriesNodeTest import ConstantSeriesNodeTest
 from .RollingReturnsNodeTest import RollingReturnsNodeTest
 from .RealizedVolNodeTest import RealizedVolNodeTest
+from .ThresholdRegimeNodeTest import ThresholdRegimeNodeTest
+from .VolRegimeNodeTest import VolRegimeNodeTest
+from .CPRegimeNodeTest import CPRegimeNodeTest
+from .HMMRegimeNodeTest import HMMRegimeNodeTest
 from .KyleLambdaNodeTest import KyleLambdaNodeTest
 from .IVSurfaceNodeTest import IVSurfaceNodeTest
 from .SeriesCsvReaderNodeTest import SeriesCsvReaderNodeTest

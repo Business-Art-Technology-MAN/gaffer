@@ -128,6 +128,28 @@ class MarketDataPlugsTest( GafferTest.TestCase ) :
 		self.assertFloat32Equal( p.termSpreadPlug().getValue(), 0.5 )
 		self.assertFloat32Equal( p.creditSpreadPlug().getValue(), 1.2 )
 
+	def testRegimePlug( self ) :
+
+		p = Gaffer.RegimePlug()
+		self.assertEqual( p.getName(), "RegimePlug" )
+		self.assertEqual( p.valuePlug().getValue(), "ANY" )
+		p.valuePlug().setValue( "RISK_ON" )
+		self.assertEqual( p.valuePlug().getValue(), "RISK_ON" )
+		o = p.createCounterpart( "regimeOut", Gaffer.Plug.Direction.Out )
+		self.assertEqual( o.getName(), "regimeOut" )
+		self.assertTrue( isinstance( o, Gaffer.RegimePlug ) )
+
+	def testVolRegimePlug( self ) :
+
+		p = Gaffer.VolRegimePlug()
+		self.assertEqual( p.getName(), "VolRegimePlug" )
+		self.assertEqual( p.valuePlug().getValue(), "VOL_NORMAL" )
+		p.valuePlug().setValue( "VOL_HIGH" )
+		self.assertEqual( p.valuePlug().getValue(), "VOL_HIGH" )
+		o = p.createCounterpart( "volOut", Gaffer.Plug.Direction.Out )
+		self.assertEqual( o.getName(), "volOut" )
+		self.assertTrue( isinstance( o, Gaffer.VolRegimePlug ) )
+
 	def testSurfacePlug( self ) :
 
 		p = Gaffer.SurfacePlug()
@@ -193,6 +215,8 @@ class MarketDataPlugsTest( GafferTest.TestCase ) :
 		surf = Gaffer.SurfacePlug()
 		vec = Gaffer.VectorPlug()
 		mat = Gaffer.MatrixPlug()
+		regime = Gaffer.RegimePlug()
+		volRegime = Gaffer.VolRegimePlug()
 		self.assertFalse( series.acceptsInput( sig ) )
 		self.assertFalse( sig.acceptsInput( series ) )
 		self.assertFalse( series.acceptsInput( weights ) )
@@ -205,8 +229,12 @@ class MarketDataPlugsTest( GafferTest.TestCase ) :
 		self.assertFalse( vec.acceptsInput( series ) )
 		self.assertFalse( series.acceptsInput( mat ) )
 		self.assertFalse( mat.acceptsInput( series ) )
-
-	def testRunTimeTyped( self ) :
+		self.assertFalse( series.acceptsInput( regime ) )
+		self.assertFalse( regime.acceptsInput( series ) )
+		self.assertFalse( series.acceptsInput( volRegime ) )
+		self.assertFalse( volRegime.acceptsInput( series ) )
+		self.assertFalse( regime.acceptsInput( volRegime ) )
+		self.assertFalse( volRegime.acceptsInput( regime ) )
 
 		for plugType in (
 			Gaffer.SeriesPlug,
@@ -216,6 +244,8 @@ class MarketDataPlugsTest( GafferTest.TestCase ) :
 			Gaffer.SurfacePlug,
 			Gaffer.VectorPlug,
 			Gaffer.MatrixPlug,
+			Gaffer.RegimePlug,
+			Gaffer.VolRegimePlug,
 			Gaffer.ScalarPlug,
 		) :
 			p = plugType()
@@ -232,6 +262,8 @@ class MarketDataPlugsTest( GafferTest.TestCase ) :
 			( Gaffer.SurfacePlug, "asOfTime" ),
 			( Gaffer.VectorPlug, "values" ),
 			( Gaffer.MatrixPlug, "rowTimes" ),
+			( Gaffer.RegimePlug, "value" ),
+			( Gaffer.VolRegimePlug, "value" ),
 		) :
 			p = plugFactory()
 			self.assertEqual( Gaffer.Metadata.value( p, "nodule:type" ), "GafferUI::CompoundNodule" )
@@ -353,6 +385,22 @@ class MarketDataPlugsTest( GafferTest.TestCase ) :
 		)
 		self.assertEqual( matCopy.numColumnsPlug().getValue(), mat.numColumnsPlug().getValue() )
 
+		reg = Gaffer.RegimePlug()
+		reg.valuePlug().setValue( "RISK_OFF" )
+		regCopy = Gaffer.RegimePlug()
+		rd = MarketDataAlgo.regimePlugToDict( reg )
+		self.assertEqual( json.loads( json.dumps( rd ) ), rd )
+		MarketDataAlgo.applyRegimePlugDict( regCopy, rd )
+		self.assertEqual( regCopy.valuePlug().getValue(), reg.valuePlug().getValue() )
+
+		vreg = Gaffer.VolRegimePlug()
+		vreg.valuePlug().setValue( "VOL_LOW" )
+		vregCopy = Gaffer.VolRegimePlug()
+		vd = MarketDataAlgo.volRegimePlugToDict( vreg )
+		self.assertEqual( json.loads( json.dumps( vd ) ), vd )
+		MarketDataAlgo.applyVolRegimePlugDict( vregCopy, vd )
+		self.assertEqual( vregCopy.valuePlug().getValue(), vreg.valuePlug().getValue() )
+
 	def testDynamicSerialisation( self ) :
 
 		dynamic = Gaffer.Plug.Flags.Default | Gaffer.Plug.Flags.Dynamic
@@ -386,6 +434,10 @@ class MarketDataPlugsTest( GafferTest.TestCase ) :
 		s["n"]["mat"].rowTimesPlug().setValue( IECore.Int64VectorData( [ 1 ] ) )
 		s["n"]["mat"].valuesRowMajorPlug().setValue( IECore.FloatVectorData( [ 3.0 ] ) )
 		s["n"]["mat"].numColumnsPlug().setValue( 1 )
+		s["n"]["reg"] = Gaffer.RegimePlug( flags = dynamic )
+		s["n"]["reg"].valuePlug().setValue( "TRANSITION" )
+		s["n"]["volReg"] = Gaffer.VolRegimePlug( flags = dynamic )
+		s["n"]["volReg"].valuePlug().setValue( "VOL_HIGH" )
 
 		ss = s.serialise()
 		s2 = Gaffer.ScriptNode()
@@ -435,6 +487,8 @@ class MarketDataPlugsTest( GafferTest.TestCase ) :
 			[ GafferTest.asFloat32( x ) for x in ( 3.0, ) ],
 		)
 		self.assertEqual( s2["n"]["mat"].numColumnsPlug().getValue(), 1 )
+		self.assertEqual( s2["n"]["reg"].valuePlug().getValue(), "TRANSITION" )
+		self.assertEqual( s2["n"]["volReg"].valuePlug().getValue(), "VOL_HIGH" )
 
 
 class PCALoadingsNodeTest( GafferTest.TestCase ) :

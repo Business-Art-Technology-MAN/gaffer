@@ -18,6 +18,8 @@ __compoundClasses = (
 	Gaffer.SurfacePlug,
 	Gaffer.VectorPlug,
 	Gaffer.MatrixPlug,
+	Gaffer.RegimePlug,
+	Gaffer.VolRegimePlug,
 )
 
 for _plugType in __compoundClasses :

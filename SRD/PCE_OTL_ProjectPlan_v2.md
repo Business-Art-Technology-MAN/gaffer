@@ -16,9 +16,9 @@ Single AI coding agent (Claude Code or equivalent) · Human architect oversight
 
 | Phase | Status | Summary |
 | --- | --- | --- |
-| **Phase 1** — OTL plugs | **Done (current scope)** | C++ **`SeriesPlug`** (parallel **`Int64VectorData`** `times` + **`FloatVectorData`** `values`), **`ScalarPlug`**, **`VectorPlug`**, **`MatrixPlug`**, **`SurfacePlug`**, **`SignalClosurePlug`**, **`WeightVectorPlug`**, **`MarketContextPlug`**; `GafferModule` bindings, serialisers, **`MarketDataMetadata`**, **`MarketDataAlgo`** (JSON dict interchange), **`GafferTest/MarketDataPlugsTest`**. *Plan delta:* not USD per-sample `timeSamples` on one float vector; `MarketContext` is a plug type, not a separate injected struct. |
+| **Phase 1** — OTL plugs | **Done (current scope)** | C++ **`SeriesPlug`**, **`ScalarPlug`**, **`VectorPlug`**, **`MatrixPlug`**, **`SurfacePlug`**, **`SignalClosurePlug`**, **`WeightVectorPlug`**, **`MarketContextPlug`**, **`RegimePlug`**, **`VolRegimePlug`** (string tokens); `GafferModule` bindings, serialisers, **`MarketDataMetadata`**, **`MarketDataAlgo`**, **`GafferTest/MarketDataPlugsTest`**. *Plan delta:* not USD per-sample `timeSamples` on one float vector; `MarketContext` is a plug type, not a separate injected struct. |
 | **Phase 2** — Layer 1–2 nodes | **Substantially complete (script/UI)** | **Done:** prior rows + **`PceGraphIO`**: **`.pce` as USD layer** (**`PCE-USD/1`** — USDA on disk, script + JSON metadata in root `customLayerData`, `/PCE` defaultPrim when OpenUSD is available; legacy **`PCE-GRAPH/1`** text envelope via `graphFormat="legacy"`) + **ArcticDB read** on `TimeSeriesStoreNode`. **GUI:** **File → PCE → Save/Open** (`GafferUI/PceFileMenu`). Tracker: [`PCE_FileFormat_And_Backends.md`](PCE_FileFormat_And_Backends.md). **`KyleLambdaNode`** / **`RealizedVolNode`**: **`ScalarPlug`** `out` (**N8**). **`IVSurfaceNode`** + **`SurfacePlug`** (**N6**). **`PackMatrixNode`** + **`PCALoadingsNode`** + PCA in **`MarketMath`** (**N9**); dedicated **`VectorPlug`/`MatrixPlug`** (**N10**). **M8/M9** nodes may still use multi-`SeriesPlug` / raw panel plugs until refactored. **Still open:** broader live APIs than HTTP CSV + FRED. **Phase 6** remains the **portfolio** USD story — see §8. |
-| **Phase 3** — Layer 3 regime nodes | **In progress** (`marketlab/phase3`) | **`RegimePlug`**, **`ThresholdRegimeNode`**, **`VolRegimeNode`**, optional **CP/HMM** — see §5 and [`PCE_Phase3_MilestoneTracker.md`](PCE_Phase3_MilestoneTracker.md). |
+| **Phase 3** — Layer 3 regime nodes | **Done** (see §5 tracker) | **`RegimePlug`**, **`VolRegimePlug`**, **`ThresholdRegimeNode`**, **`VolRegimeNode`**, **`CPRegimeNode`**, **`HMMRegimeNode`** — [`PCE_Phase3_MilestoneTracker.md`](PCE_Phase3_MilestoneTracker.md). |
 | **Phase 4 onward** | Not started | Signal shaders + OTL runtime (§6) through integration. |
 
 # 1  The Honest Estimate
@@ -153,17 +153,19 @@ Regime nodes consume Layer 1–2 outputs and produce a regime enum output. One r
 
 | Task | AI Agent Action | Complexity |
 | --- | --- | --- |
-| RegimePlug (C++) | New enum plug: RISK_ON, RISK_OFF, TRANSITION, ANY. Registered with TypeRegistry. Serialises as string. Python binding. | Low |
-| ThresholdRegimeNode (Python) | Explicit threshold classifier. Inputs: vix_series, term_spread_series, credit_spread_series SeriesPlugs. Parameters: vix_threshold, credit_threshold, term_threshold. Output: RegimePlug. | Low |
-| VolRegimeNode (Python) | Classifies VOL_HIGH / VOL_NORMAL / VOL_LOW from VIX SeriesPlug vs realized vol. Required by options signal shaders. Output: VolRegimePlug (new enum subtype). | Low |
-| CPRegimeNode (Python) | Cochrane-Piazzesi factor as regime classifier. Input: yield_curve SeriesPlug via RatesStore. Output: RegimePlug + ScalarPlug cp_value. | Medium |
-| HMMRegimeNode (Python) | Hidden Markov Model via hmmlearn (pip install). N-state regime classifier from returns SeriesPlug. Output: RegimePlug + probability series. | Medium |
+| RegimePlug (C++) | String-valued regime token (**RISK_ON**, **RISK_OFF**, …) as **`RegimePlug`** with **`value`** `StringPlug`; bindings + tests (**done** in Phase 3 branch). | Low |
+| ThresholdRegimeNode (Python) | Explicit threshold classifier. Inputs: **`vixSeries`**, **`termSpreadSeries`**, **`creditSpreadSeries`** (`SeriesPlug`). Parameters: **`vixThreshold`**, **`creditThreshold`**, **`termThreshold`**. Output: **`RegimePlug`** (**done**). | Low |
+| VolRegimePlug (C++) + VolRegimeNode (Python) | **`VolRegimePlug`** (**VOL_HIGH** / **VOL_NORMAL** / **VOL_LOW** / **ANY**). **`VolRegimeNode`**: `vixSeries`, `realizedVolSeries`, ratio thresholds → **`VolRegimePlug`** (**done**). | Low |
+| CPRegimeNode (Python) | Short/long forward or yield **`SeriesPlug`**; **`cpValue`** **`ScalarPlug`**; **`RegimePlug`** vs band (**done**). | Medium |
+| HMMRegimeNode (Python) | `hmmlearn` when available; returns **`SeriesPlug`** in; **`regimeOut`** + **`stateProbSeries`** (**done**). | Medium |
 
 > Phase 3 exit criterion A ThresholdRegimeNode and VolRegimeNode appear in the node graph, connect to VIX and spread data nodes from Phase 2, and output a stable regime classification. Regime output visible in node tooltip on hover.
 
 # 6  Phase 4 — Layer 4 Signal Nodes and OTL Runtime
 
 **Phase 4 — Signal Shaders, OTL Grammar, and SigC Evaluation** · *6–10 days*
+
+**Milestone tracker:** [`PCE_Phase4_MilestoneTracker.md`](PCE_Phase4_MilestoneTracker.md) · **branch:** `marketlab/phase4`.
 
 
 The most technically demanding phase. Two parallel tracks: (A) Python signal nodes that produce SignalClosurePlugs directly, and (B) the OTL shader runtime that allows .otl files to be loaded as nodes. Track A delivers value immediately. Track B is the language layer.
