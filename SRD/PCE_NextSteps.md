@@ -2,7 +2,7 @@
 
 **Purpose:** Track **near-term** work that stays closest to **Phase 2** scope after M1–M10 and **`PCE-USD/1`** ship.
 
-**Parent docs:** [PCE_OTL_ProjectPlan_v2.md](PCE_OTL_ProjectPlan_v2.md) (exit criteria, Phase 6 boundary) · [PCE_Phase2_MilestoneTracker.md](PCE_Phase2_MilestoneTracker.md) · [PCE_Phase3_MilestoneTracker.md](PCE_Phase3_MilestoneTracker.md) (Layer 3 regimes) · [PCE_Phase4_MilestoneTracker.md](PCE_Phase4_MilestoneTracker.md) (Layer 4 signals + OTL) · [PCE_FileFormat_And_Backends.md](PCE_FileFormat_And_Backends.md)
+**Parent docs:** [PCE_OTL_ProjectPlan_v2.md](PCE_OTL_ProjectPlan_v2.md) (exit criteria, Phase 6 boundary) · [PCE_Phase2_MilestoneTracker.md](PCE_Phase2_MilestoneTracker.md) · [PCE_Phase3_MilestoneTracker.md](PCE_Phase3_MilestoneTracker.md) (Layer 3 regimes) · [PCE_Phase4_MilestoneTracker.md](PCE_Phase4_MilestoneTracker.md) (Layer 4 signals + OTL) · [PCE_Phase5_MilestoneTracker.md](PCE_Phase5_MilestoneTracker.md) (Layer 5 portfolio) · [PCE_FileFormat_And_Backends.md](PCE_FileFormat_And_Backends.md)
 
 **Update:** edit this file when items start/finish; keep status honest (`Not started` / `In progress` / `Done`).
 
@@ -36,6 +36,7 @@
 | **N8** | **`ScalarPlug` alias** | Tracker “Phase 2b / later”. | **Done** | C++ `ScalarPlug` (`FloatPlug` subclass, own `TypeId`); `NumericPlug` accepts `ScalarPlug` as float input; **`RealizedVolNode`** / **`KyleLambdaNode`** use `out` = **`ScalarPlug`**. Tests: ``GafferTest.MarketDataPlugsTest.testScalarToFloatConnection``. |
 | **N9** | **`PCALoadingsNode`** | Named in main plan deferred list. | **Done** | `python/Gaffer/PCALoadingsNode.py` + `MarketMath.pca_top_components_covariance`; **`PackMatrixNode`** builds **`MatrixPlug`** from panel plugs. Tests: class ``PCALoadingsNodeTest`` in `python/GafferTest/MarketDataPlugsTest.py` (run as ``GafferTest.PCALoadingsNodeTest``). |
 | **N10** | **Dedicated `VectorPlug` / `MatrixPlug`** | Deferred; M8/M9 used multi–`SeriesPlug` / panels. | **Done** | C++ compound plugs: **`VectorPlug`** (`values` = `FloatVectorDataPlug`), **`MatrixPlug`** (`rowTimes`, `valuesRowMajor`, `numColumns`); `MarketDataPlugsBinding` serialisers; `MarketDataAlgo` dict interchange + `MarketDataMetadata` nodules. Tests: ``GafferTest.MarketDataPlugsTest`` (vec/mat + JSON). |
+| **N11** | **Layer 5 — portfolio (`ArraySignalPlug`, `PortfolioAggregatorNode`, exposure caps)** | Plan [§7](PCE_OTL_ProjectPlan_v2.md). | **Done** | [PCE_Phase5_MilestoneTracker.md](PCE_Phase5_MilestoneTracker.md); **`WeightVectorPlug.halfLives`**; ``MarketLab.cmd test GafferTest.Phase5Test GafferTest.MarketDataPlugsTest`` (needs built **`bin/__private/gaffer.exe`**). |
 
 ---
 
@@ -55,15 +56,16 @@ Wire a **panel** into a **`MatrixPlug`**, then PCA:
 
 **Phase 6** = **portfolio** USD: PCE schemas, **`/Portfolio/...`** hierarchy, composition overrides, timeline — see [PCE_OTL_ProjectPlan_v2.md](PCE_OTL_ProjectPlan_v2.md) §8.
 
-Track Phase 6 work in the main plan / a dedicated Phase 6 doc when that slice starts; **§A (N1–N3)** and **§B–§C (N4–N10)** are complete — **Phase 3** regime milestones are complete (`PCE_Phase3_MilestoneTracker.md`); next focus **Phase 4** (`PCE_Phase4_MilestoneTracker.md`), optional refactors, or Phase 6 prep.
+Track Phase 6 work in the main plan / a dedicated Phase 6 doc when that slice starts; **§A (N1–N3)** and **§B–§C (N4–N11)** are complete — **Phase 3** regime milestones are complete (`PCE_Phase3_MilestoneTracker.md`); Layer 5 portfolio slice is tracked in **`PCE_Phase5_MilestoneTracker.md`** (N11); next focus **Phase 4** (`PCE_Phase4_MilestoneTracker.md`) backlog, optional refactors, or **Phase 6** §8.
 
 ---
 
 ## Immediate next
 
 1. **Phase 4 (branch `marketlab/phase4`):** Follow [`PCE_Phase4_MilestoneTracker.md`](PCE_Phase4_MilestoneTracker.md) — Track A signal nodes (**`SDFWeightNode`**, **`OptionsSdfNode`**, **`ESFuturesSignalNode`**, **`HJBoundValidator`**) and Track B OTL runtime (**grammar → parser → `OTLShaderNode` → stdlib → shading system**) per plan §6 exit criterion.
-2. **Optional refactor:** Rewire **M8/M9** nodes (**`FamaFrenchLoadingsNode`**, **`CrossSectionNode`**, etc.) to prefer **`VectorPlug`/`MatrixPlug`** where it simplifies scripts.
-3. **Backlog:** Arctic **on-graph** publish nodes (beyond **`ArcticBackend`** helpers), richer **live vendors** than HTTP CSV + FRED, then **Phase 6** portfolio USD — [PCE_OTL_ProjectPlan_v2.md](PCE_OTL_ProjectPlan_v2.md) §8.
+2. **Phase 5 verification:** After a full build, run ``MarketLab.cmd test GafferTest.Phase5Test GafferTest.MarketDataPlugsTest`` (see N11).
+3. **Optional refactor:** Rewire **M8/M9** nodes (**`FamaFrenchLoadingsNode`**, **`CrossSectionNode`**, etc.) to prefer **`VectorPlug`/`MatrixPlug`** where it simplifies scripts.
+4. **Backlog:** Arctic **on-graph** publish nodes (beyond **`ArcticBackend`** helpers), richer **live vendors** than HTTP CSV + FRED, then **Phase 6** portfolio USD — [PCE_OTL_ProjectPlan_v2.md](PCE_OTL_ProjectPlan_v2.md) §8.
 
 ---
 

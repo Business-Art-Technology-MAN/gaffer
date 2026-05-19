@@ -68,6 +68,7 @@ def weightVectorPlugToDict( plug: Gaffer.WeightVectorPlug ) -> Dict[str, Any] :
 		"instrumentIds": list( plug.instrumentIdsPlug().getValue() ),
 		"targetWeights": list( plug.targetWeightsPlug().getValue() ),
 		"confidences": list( plug.confidencesPlug().getValue() ),
+		"halfLives": list( plug.halfLivesPlug().getValue() ),
 		"grossExposure": plug.grossExposurePlug().getValue(),
 		"netExposure": plug.netExposurePlug().getValue(),
 		"activeRegime": plug.activeRegimePlug().getValue(),
@@ -82,6 +83,8 @@ def applyWeightVectorPlugDict( plug: Gaffer.WeightVectorPlug, d : Mapping[str, A
 		plug.targetWeightsPlug().setValue( IECore.FloatVectorData( list( d["targetWeights"] ) ) )
 	if "confidences" in d :
 		plug.confidencesPlug().setValue( IECore.FloatVectorData( list( d["confidences"] ) ) )
+	if "halfLives" in d :
+		plug.halfLivesPlug().setValue( IECore.FloatVectorData( list( d["halfLives"] ) ) )
 	if "grossExposure" in d :
 		plug.grossExposurePlug().setValue( float( d["grossExposure"] ) )
 	if "netExposure" in d :

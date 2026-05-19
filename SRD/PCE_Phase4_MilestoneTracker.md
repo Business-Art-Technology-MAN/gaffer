@@ -3,7 +3,7 @@
 **Parent:** [PCE_OTL_ProjectPlan_v2.md](PCE_OTL_ProjectPlan_v2.md) §6 *Phase 4 — Layer 4 Signal Nodes and OTL Runtime*.  
 **Active branch:** `marketlab/phase4` (fork after Phase 3 is merged to `main`).  
 **Depends on:** Phase 1 plugs (especially **`SignalClosurePlug`**, **`VectorPlug`**, **`MatrixPlug`**, **`SurfacePlug`**, **`VolRegimePlug`**, **`SeriesPlug`**, **`ScalarPlug`**), Phase 2–3 data/regime nodes, and **`PceGraphIO`** for scripted graphs.  
-**Precedes:** Phase 5 portfolio aggregator ([§7](PCE_OTL_ProjectPlan_v2.md)) — **`ArraySignalPlug`**, **`PortfolioAggregatorNode`**, etc.
+**Precedes:** [PCE_Phase5_MilestoneTracker.md](PCE_Phase5_MilestoneTracker.md) (Layer 5), then Phase 6 PCE USD portfolio stage ([§8](PCE_OTL_ProjectPlan_v2.md)).
 
 This document is the **working backlog** for Layer 4: **Track A** — Python nodes that emit **`SignalClosurePlug`**; **Track B** — OTL grammar, parser, **`OTLShaderNode`**, stdlib shaders, and shading system.
 

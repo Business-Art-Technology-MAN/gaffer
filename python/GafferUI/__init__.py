@@ -203,6 +203,7 @@ from .BoolPlugValueWidget import BoolPlugValueWidget
 from .PathPlugValueWidget import PathPlugValueWidget
 from .FileSystemPathPlugValueWidget import FileSystemPathPlugValueWidget
 from .VectorDataPlugValueWidget import VectorDataPlugValueWidget
+from .WeightVectorPlugValueWidget import WeightVectorPlugValueWidget
 from .PathVectorDataPlugValueWidget import PathVectorDataPlugValueWidget
 from .FileSystemPathVectorDataPlugValueWidget import FileSystemPathVectorDataPlugValueWidget
 from .PlugWidget import PlugWidget

@@ -169,6 +169,7 @@ from .CPRegimeNodeTest import CPRegimeNodeTest
 from .HMMRegimeNodeTest import HMMRegimeNodeTest
 from .Phase4TrackATest import Phase4TrackATest
 from .Phase4TrackBTest import Phase4TrackBTest
+from .Phase5Test import Phase5Test
 from .KyleLambdaNodeTest import KyleLambdaNodeTest
 from .IVSurfaceNodeTest import IVSurfaceNodeTest
 from .SeriesCsvReaderNodeTest import SeriesCsvReaderNodeTest

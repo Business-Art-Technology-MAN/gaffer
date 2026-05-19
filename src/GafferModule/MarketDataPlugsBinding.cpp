@@ -12,6 +12,8 @@
 #include "GafferBindings/SerialisationBinding.h"
 #include "GafferBindings/ValuePlugBinding.h"
 
+#include "Gaffer/ArrayPlug.h"
+#include "Gaffer/ArraySignalPlug.h"
 #include "Gaffer/MarketContextPlug.h"
 #include "Gaffer/MatrixPlug.h"
 #include "Gaffer/RegimePlug.h"
@@ -74,6 +76,24 @@ MARKET_PLUG_SERIALISER( VolRegimePlug, "VolRegimePlug" )
 
 #undef MARKET_PLUG_SERIALISER
 
+class ArraySignalPlugSerialiser : public PlugSerialiser
+{
+
+	public :
+
+		bool childNeedsConstruction( const Gaffer::GraphComponent *child, const Serialisation &serialisation ) const override
+		{
+			return false;
+		}
+
+		std::string constructor( const Gaffer::GraphComponent *graphComponent, Serialisation &serialisation ) const override
+		{
+			(void)serialisation;
+			return PlugSerialiser::repr( static_cast<const ArraySignalPlug *>( graphComponent ), Gaffer::Plug::All );
+		}
+
+};
+
 } // namespace
 
 void GafferModule::bindMarketDataPlugs()
@@ -92,6 +112,21 @@ void GafferModule::bindMarketDataPlugs()
 		.def( "valuesPlug", static_cast<FloatVectorDataPlug *(SeriesPlug::*)()>( &SeriesPlug::valuesPlug ), return_value_policy<reference_existing_object>() )
 	;
 	Serialisation::registerSerialiser( SeriesPlug::staticTypeId(), new SeriesPlugSerialiser );
+
+	PlugClass<ArraySignalPlug>()
+		.def(
+			init<const std::string &, Plug::Direction, unsigned>(
+				(
+					arg( "name" ) = GraphComponent::defaultName<ArraySignalPlug>(),
+					arg( "direction" ) = Plug::In,
+					arg( "flags" ) = Plug::Default
+				)
+			)
+		)
+		.def( "instrumentIdsPlug", static_cast<StringVectorDataPlug *(ArraySignalPlug::*)()>( &ArraySignalPlug::instrumentIdsPlug ), return_value_policy<reference_existing_object>() )
+		.def( "signalsPlug", static_cast<ArrayPlug *(ArraySignalPlug::*)()>( &ArraySignalPlug::signalsPlug ), return_value_policy<reference_existing_object>() )
+	;
+	Serialisation::registerSerialiser( ArraySignalPlug::staticTypeId(), new ArraySignalPlugSerialiser );
 
 	PlugClass<SignalClosurePlug>()
 		.def(
@@ -131,6 +166,7 @@ void GafferModule::bindMarketDataPlugs()
 		.def( "instrumentIdsPlug", static_cast<StringVectorDataPlug *(WeightVectorPlug::*)()>( &WeightVectorPlug::instrumentIdsPlug ), return_value_policy<reference_existing_object>() )
 		.def( "targetWeightsPlug", static_cast<FloatVectorDataPlug *(WeightVectorPlug::*)()>( &WeightVectorPlug::targetWeightsPlug ), return_value_policy<reference_existing_object>() )
 		.def( "confidencesPlug", static_cast<FloatVectorDataPlug *(WeightVectorPlug::*)()>( &WeightVectorPlug::confidencesPlug ), return_value_policy<reference_existing_object>() )
+		.def( "halfLivesPlug", static_cast<FloatVectorDataPlug *(WeightVectorPlug::*)()>( &WeightVectorPlug::halfLivesPlug ), return_value_policy<reference_existing_object>() )
 		.def( "grossExposurePlug", static_cast<FloatPlug *(WeightVectorPlug::*)()>( &WeightVectorPlug::grossExposurePlug ), return_value_policy<reference_existing_object>() )
 		.def( "netExposurePlug", static_cast<FloatPlug *(WeightVectorPlug::*)()>( &WeightVectorPlug::netExposurePlug ), return_value_policy<reference_existing_object>() )
 		.def( "activeRegimePlug", static_cast<StringPlug *(WeightVectorPlug::*)()>( &WeightVectorPlug::activeRegimePlug ), return_value_policy<reference_existing_object>() )

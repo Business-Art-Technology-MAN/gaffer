@@ -85,12 +85,21 @@ class MarketDataPlugsTest( GafferTest.TestCase ) :
 		self.assertEqual( p.regimeConditionPlug().getValue(), "riskOn" )
 		self.assertEqual( p.sideBetPlug().getValue(), True )
 
+	def testArraySignalPlug( self ) :
+
+		p = Gaffer.ArraySignalPlug()
+		p.instrumentIdsPlug().setValue( IECore.StringVectorData( [ "a", "b" ] ) )
+		s = p.signalsPlug()
+		s.resize( 2 )
+		self.assertEqual( len( list( s.children() ) ), 2 )
+
 	def testWeightVectorPlug( self ) :
 
 		p = Gaffer.WeightVectorPlug()
 		p.instrumentIdsPlug().setValue( IECore.StringVectorData( [ "SPY", "TLT" ] ) )
 		p.targetWeightsPlug().setValue( IECore.FloatVectorData( [ 0.6, 0.4 ] ) )
 		p.confidencesPlug().setValue( IECore.FloatVectorData( [ 0.8, 0.7 ] ) )
+		p.halfLivesPlug().setValue( IECore.FloatVectorData( [ 10.0, 20.0 ] ) )
 		p.grossExposurePlug().setValue( 1.0 )
 		p.netExposurePlug().setValue( 0.2 )
 		p.activeRegimePlug().setValue( "carry" )
@@ -105,8 +114,8 @@ class MarketDataPlugsTest( GafferTest.TestCase ) :
 			[ GafferTest.asFloat32( x ) for x in ( 0.6, 0.4 ) ],
 		)
 		self.assertEqual(
-			self.__floatVectorReadable32( p.confidencesPlug().getValue() ),
-			[ GafferTest.asFloat32( x ) for x in ( 0.8, 0.7 ) ],
+			self.__floatVectorReadable32( p.halfLivesPlug().getValue() ),
+			[ GafferTest.asFloat32( x ) for x in ( 10.0, 20.0 ) ],
 		)
 		self.assertFloat32Equal( p.grossExposurePlug().getValue(), 1.0 )
 		self.assertFloat32Equal( p.netExposurePlug().getValue(), 0.2 )
@@ -233,6 +242,10 @@ class MarketDataPlugsTest( GafferTest.TestCase ) :
 		self.assertFalse( regime.acceptsInput( series ) )
 		self.assertFalse( series.acceptsInput( volRegime ) )
 		self.assertFalse( volRegime.acceptsInput( series ) )
+		arraySig = Gaffer.ArraySignalPlug()
+		self.assertFalse( series.acceptsInput( arraySig ) )
+		self.assertFalse( arraySig.acceptsInput( series ) )
+		self.assertFalse( arraySig.isInstanceOf( Gaffer.ValuePlug.staticTypeId() ) )
 		self.assertFalse( regime.acceptsInput( volRegime ) )
 		self.assertFalse( volRegime.acceptsInput( regime ) )
 
@@ -258,6 +271,7 @@ class MarketDataPlugsTest( GafferTest.TestCase ) :
 			( Gaffer.SeriesPlug, "times" ),
 			( Gaffer.SignalClosurePlug, "alphaWeight" ),
 			( Gaffer.WeightVectorPlug, "instrumentIds" ),
+			( Gaffer.ArraySignalPlug, "instrumentIds" ),
 			( Gaffer.MarketContextPlug, "timeNanoseconds" ),
 			( Gaffer.SurfacePlug, "asOfTime" ),
 			( Gaffer.VectorPlug, "values" ),
@@ -298,6 +312,7 @@ class MarketDataPlugsTest( GafferTest.TestCase ) :
 		w.instrumentIdsPlug().setValue( IECore.StringVectorData( [ "X", "Y" ] ) )
 		w.targetWeightsPlug().setValue( IECore.FloatVectorData( [ 0.2, 0.8 ] ) )
 		w.confidencesPlug().setValue( IECore.FloatVectorData( [ 0.9, 0.8 ] ) )
+		w.halfLivesPlug().setValue( IECore.FloatVectorData( [ 3.0, 4.0 ] ) )
 		w.grossExposurePlug().setValue( 1.0 )
 		w.netExposurePlug().setValue( 0.0 )
 		w.activeRegimePlug().setValue( "foo" )
@@ -312,8 +327,8 @@ class MarketDataPlugsTest( GafferTest.TestCase ) :
 			self.__floatVectorReadable32( w.targetWeightsPlug().getValue() ),
 		)
 		self.assertEqual(
-			self.__floatVectorReadable32( wCopy.confidencesPlug().getValue() ),
-			self.__floatVectorReadable32( w.confidencesPlug().getValue() ),
+			self.__floatVectorReadable32( wCopy.halfLivesPlug().getValue() ),
+			self.__floatVectorReadable32( w.halfLivesPlug().getValue() ),
 		)
 		self.assertFloat32Equal( wCopy.grossExposurePlug().getValue(), w.grossExposurePlug().getValue() )
 		self.assertFloat32Equal( wCopy.netExposurePlug().getValue(), w.netExposurePlug().getValue() )

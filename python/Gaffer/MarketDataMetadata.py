@@ -13,6 +13,7 @@ import Gaffer
 __compoundClasses = (
 	Gaffer.SeriesPlug,
 	Gaffer.SignalClosurePlug,
+	Gaffer.ArraySignalPlug,
 	Gaffer.WeightVectorPlug,
 	Gaffer.MarketContextPlug,
 	Gaffer.SurfacePlug,

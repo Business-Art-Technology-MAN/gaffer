@@ -77,6 +77,15 @@ from .OTLShadingSystem import (
 	compile_otl_network_for_pce,
 	validate_otl_shader_network,
 )
+from .PortfolioConstrainer import (
+	OTL_EXPOSURE_VIOLATION,
+	cap_single_name,
+	drawdown_gate_apply,
+	enforce_gross_exposure,
+	enforce_net_exposure,
+	emit_exposure_violation,
+)
+from .PortfolioAggregatorNode import PortfolioAggregatorNode
 from .KyleLambdaNode import KyleLambdaNode
 from .SeriesCsvReaderNode import SeriesCsvReaderNode
 from . import MarketDataTimeseries

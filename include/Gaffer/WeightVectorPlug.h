@@ -27,6 +27,7 @@ class GAFFER_API WeightVectorPlug : public ValuePlug
 			IECore::ConstStringVectorDataPtr defaultInstrumentIds = nullptr,
 			IECore::ConstFloatVectorDataPtr defaultTargetWeights = nullptr,
 			IECore::ConstFloatVectorDataPtr defaultConfidences = nullptr,
+			IECore::ConstFloatVectorDataPtr defaultHalfLives = nullptr,
 			float defaultGrossExposure = 0.0f,
 			float defaultNetExposure = 0.0f,
 			const std::string &defaultActiveRegime = "",
@@ -50,6 +51,8 @@ class GAFFER_API WeightVectorPlug : public ValuePlug
 		const FloatVectorDataPlug *targetWeightsPlug() const;
 		FloatVectorDataPlug *confidencesPlug();
 		const FloatVectorDataPlug *confidencesPlug() const;
+		FloatVectorDataPlug *halfLivesPlug();
+		const FloatVectorDataPlug *halfLivesPlug() const;
 		FloatPlug *grossExposurePlug();
 		const FloatPlug *grossExposurePlug() const;
 		FloatPlug *netExposurePlug();

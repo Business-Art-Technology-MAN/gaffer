@@ -166,6 +166,7 @@ enum TypeId
 	MatrixPlugTypeId = 118119,
 	RegimePlugTypeId = 118120,
 	VolRegimePlugTypeId = 118121,
+	ArraySignalPlugTypeId = 118122,
 
 	LastTypeId = 118799
 
