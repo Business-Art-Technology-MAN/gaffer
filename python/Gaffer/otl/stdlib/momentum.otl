@@ -1,0 +1,10 @@
+shader momentum(float scale = 1.0) {
+  signal(
+    alphaWeight = scale * 0.1,
+    confidence = 0.5,
+    halfLife = 20.0,
+    maxImpactFrac = 0.05,
+    regimeCondition = "momentum",
+    sideBet = false
+  );
+}

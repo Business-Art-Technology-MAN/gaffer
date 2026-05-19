@@ -1,0 +1,10 @@
+shader zscore(float window = 60.0) {
+  signal(
+    alphaWeight = 0.0,
+    confidence = clamp(window / 120.0, 0.0, 1.0),
+    halfLife = window,
+    maxImpactFrac = 0.05,
+    regimeCondition = "zscore",
+    sideBet = false
+  );
+}

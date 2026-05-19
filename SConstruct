@@ -1086,7 +1086,10 @@ if env["GAFFERUSD"] :
 
 libraries = {
 
-	"Gaffer" : {},
+	"Gaffer" : {
+		# OTL v0.1 stdlib (``.otl``); ``*.py`` install glob does not pick these up.
+		"additionalFiles" : glob.glob( "python/Gaffer/otl/stdlib/*.otl" ),
+	},
 
 	"GafferTest" : {
 		"envAppends" : {

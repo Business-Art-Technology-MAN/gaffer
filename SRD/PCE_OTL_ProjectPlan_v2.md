@@ -12,14 +12,14 @@ Single AI coding agent (Claude Code or equivalent) · Human architect oversight
 
 ## Implementation status (MarketLab / PCE fork)
 
-**Snapshot: 2026-05-18.** Trackers: [`PCE_Phase2a_Progress.md`](PCE_Phase2a_Progress.md) (M1–M3), [`PCE_Phase2_MilestoneTracker.md`](PCE_Phase2_MilestoneTracker.md) (M4–M10), [`PCE_Phase3_MilestoneTracker.md`](PCE_Phase3_MilestoneTracker.md) (Layer 3 regimes), [`PCE_NextSteps.md`](PCE_NextSteps.md) (cross-phase backlog).
+**Snapshot: 2026-05-18.** Trackers: [`PCE_Phase2a_Progress.md`](PCE_Phase2a_Progress.md) (M1–M3), [`PCE_Phase2_MilestoneTracker.md`](PCE_Phase2_MilestoneTracker.md) (M4–M10), [`PCE_Phase3_MilestoneTracker.md`](PCE_Phase3_MilestoneTracker.md) (Layer 3 regimes), [`PCE_Phase4_MilestoneTracker.md`](PCE_Phase4_MilestoneTracker.md) (Layer 4), [`PCE_NextSteps.md`](PCE_NextSteps.md) (cross-phase backlog).
 
 | Phase | Status | Summary |
 | --- | --- | --- |
 | **Phase 1** — OTL plugs | **Done (current scope)** | C++ **`SeriesPlug`**, **`ScalarPlug`**, **`VectorPlug`**, **`MatrixPlug`**, **`SurfacePlug`**, **`SignalClosurePlug`**, **`WeightVectorPlug`**, **`MarketContextPlug`**, **`RegimePlug`**, **`VolRegimePlug`** (string tokens); `GafferModule` bindings, serialisers, **`MarketDataMetadata`**, **`MarketDataAlgo`**, **`GafferTest/MarketDataPlugsTest`**. *Plan delta:* not USD per-sample `timeSamples` on one float vector; `MarketContext` is a plug type, not a separate injected struct. |
 | **Phase 2** — Layer 1–2 nodes | **Substantially complete (script/UI)** | **Done:** prior rows + **`PceGraphIO`**: **`.pce` as USD layer** (**`PCE-USD/1`** — USDA on disk, script + JSON metadata in root `customLayerData`, `/PCE` defaultPrim when OpenUSD is available; legacy **`PCE-GRAPH/1`** text envelope via `graphFormat="legacy"`) + **ArcticDB read** on `TimeSeriesStoreNode`. **GUI:** **File → PCE → Save/Open** (`GafferUI/PceFileMenu`). Tracker: [`PCE_FileFormat_And_Backends.md`](PCE_FileFormat_And_Backends.md). **`KyleLambdaNode`** / **`RealizedVolNode`**: **`ScalarPlug`** `out` (**N8**). **`IVSurfaceNode`** + **`SurfacePlug`** (**N6**). **`PackMatrixNode`** + **`PCALoadingsNode`** + PCA in **`MarketMath`** (**N9**); dedicated **`VectorPlug`/`MatrixPlug`** (**N10**). **M8/M9** nodes may still use multi-`SeriesPlug` / raw panel plugs until refactored. **Still open:** broader live APIs than HTTP CSV + FRED. **Phase 6** remains the **portfolio** USD story — see §8. |
 | **Phase 3** — Layer 3 regime nodes | **Done** (see §5 tracker) | **`RegimePlug`**, **`VolRegimePlug`**, **`ThresholdRegimeNode`**, **`VolRegimeNode`**, **`CPRegimeNode`**, **`HMMRegimeNode`** — [`PCE_Phase3_MilestoneTracker.md`](PCE_Phase3_MilestoneTracker.md). |
-| **Phase 4 onward** | Not started | Signal shaders + OTL runtime (§6) through integration. |
+| **Phase 4 onward** | **Track A + Track B done (v0.1 OTL)** | **Python Track A:** **`SDFWeightNode`**, **`OptionsSdfNode`**, **`AlphaHalflifeNode`**, **`ESFuturesSignalNode`**, **`HJBoundValidator`**, **`SignalNodeAlgo`** — [`PCE_Phase4_MilestoneTracker.md`](PCE_Phase4_MilestoneTracker.md). **Track B:** **`Gaffer.otl`**, **`OTLShaderNode`**, **`OTLShadingSystem`**, stdlib **`.otl`**, **`Phase4TrackBTest`**. |
 
 # 1  The Honest Estimate
 
@@ -174,10 +174,10 @@ The most technically demanding phase. Two parallel tracks: (A) Python signal nod
 
 | Task | AI Agent Action | Complexity |
 | --- | --- | --- |
-| SDFWeightNode (Python) | Avramov-He SDF projection. Inputs: VectorPlug ff_loadings, MatrixPlug conn_matrix, VectorPlug factor_ret. Output: SignalClosurePlug. Uses scipy for projection. | Low |
-| OptionsSdfNode (Python) | Luzzi et al. nonparametric SDF. Input: SurfacePlug iv_surface, VolRegimePlug. Output: SignalClosurePlug. U-shape correction applied when VOL_HIGH. | Medium |
-| ESFuturesSignalNode (Python) | Reference Layer 4 signal node for ES futures. Wires SDFWeightNode + KyleLambdaNode + AlphaHalflifeNode into a single Python node. Output: SignalClosurePlug. | Low |
-| HJBoundValidator (Python) | Validates \|alpha_weight\| * confidence <= 1.0 on SignalClosurePlug output. Raises OTL_HJ_VIOLATION as a Gaffer MessagePlug warning. Visual indicator on node. | Low |
+| SDFWeightNode (Python) | Avramov-He SDF projection. Inputs: **`ffLoadings`**, **`connMatrix`**, **`factorRet`**. Output: **`SignalClosurePlug`**. Linear algebra in **`SignalNodeAlgo`** (**done**). | Low |
+| OptionsSdfNode (Python) | IV skew tilt from **`SurfacePlug`** + **`VolRegimePlug`**; U-shape gain when **VOL_HIGH** (**done**). | Medium |
+| ESFuturesSignalNode + AlphaHalflifeNode (Python) | Merge base SigC + **Kyle λ** + half-life scalar (**done**). | Low |
+| HJBoundValidator (Python) | HJ check; **`IECore.msg`** context **OTL_HJ_VIOLATION** (**done**). | Low |
 
 ### Track B — OTL Language Runtime
 

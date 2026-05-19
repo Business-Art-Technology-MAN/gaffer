@@ -1,0 +1,10 @@
+shader frac_diff(float d = 0.4) {
+  signal(
+    alphaWeight = d * 0.05,
+    confidence = 0.55,
+    halfLife = 42.0,
+    maxImpactFrac = 0.05,
+    regimeCondition = "frac_diff",
+    sideBet = false
+  );
+}

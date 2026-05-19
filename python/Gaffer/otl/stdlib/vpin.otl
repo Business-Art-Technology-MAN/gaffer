@@ -1,0 +1,10 @@
+shader vpin(float intensity = 1.0) {
+  signal(
+    alphaWeight = intensity * 0.03,
+    confidence = 0.5,
+    halfLife = 5.0,
+    maxImpactFrac = 0.05,
+    regimeCondition = "vpin",
+    sideBet = false
+  );
+}

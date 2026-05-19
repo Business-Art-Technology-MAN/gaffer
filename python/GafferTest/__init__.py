@@ -167,6 +167,8 @@ from .ThresholdRegimeNodeTest import ThresholdRegimeNodeTest
 from .VolRegimeNodeTest import VolRegimeNodeTest
 from .CPRegimeNodeTest import CPRegimeNodeTest
 from .HMMRegimeNodeTest import HMMRegimeNodeTest
+from .Phase4TrackATest import Phase4TrackATest
+from .Phase4TrackBTest import Phase4TrackBTest
 from .KyleLambdaNodeTest import KyleLambdaNodeTest
 from .IVSurfaceNodeTest import IVSurfaceNodeTest
 from .SeriesCsvReaderNodeTest import SeriesCsvReaderNodeTest

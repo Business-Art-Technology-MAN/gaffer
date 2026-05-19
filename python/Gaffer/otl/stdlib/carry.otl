@@ -1,0 +1,10 @@
+shader carry(float weight = 0.05) {
+  signal(
+    alphaWeight = weight,
+    confidence = 0.7,
+    halfLife = 63.0,
+    maxImpactFrac = 0.05,
+    regimeCondition = "carry",
+    sideBet = false
+  );
+}

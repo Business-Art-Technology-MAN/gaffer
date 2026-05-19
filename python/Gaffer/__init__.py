@@ -66,6 +66,17 @@ from .ThresholdRegimeNode import ThresholdRegimeNode
 from .VolRegimeNode import VolRegimeNode
 from .CPRegimeNode import CPRegimeNode
 from .HMMRegimeNode import HMMRegimeNode
+from .AlphaHalflifeNode import AlphaHalflifeNode
+from .SDFWeightNode import SDFWeightNode
+from .OptionsSdfNode import OptionsSdfNode
+from .ESFuturesSignalNode import ESFuturesSignalNode
+from .HJBoundValidator import HJBoundValidator
+from .OTLShaderNode import OTLShaderNode
+from .OTLShadingSystem import (
+	OTL_LAYER_VIOLATION,
+	compile_otl_network_for_pce,
+	validate_otl_shader_network,
+)
 from .KyleLambdaNode import KyleLambdaNode
 from .SeriesCsvReaderNode import SeriesCsvReaderNode
 from . import MarketDataTimeseries

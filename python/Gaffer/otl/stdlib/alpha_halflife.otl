@@ -1,0 +1,10 @@
+shader alpha_halflife(float days = 21.0) {
+  signal(
+    alphaWeight = 0.0,
+    confidence = 1.0,
+    halfLife = days,
+    maxImpactFrac = 0.05,
+    regimeCondition = "alpha_halflife",
+    sideBet = false
+  );
+}

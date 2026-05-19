@@ -1,0 +1,10 @@
+shader kyle_lambda(float kyle = 1.0) {
+  signal(
+    alphaWeight = kyle * 0.02,
+    confidence = 0.6,
+    halfLife = 40.0,
+    maxImpactFrac = 0.05,
+    regimeCondition = "kyle_lambda",
+    sideBet = false
+  );
+}
