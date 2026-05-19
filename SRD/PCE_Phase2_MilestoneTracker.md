@@ -2,7 +2,8 @@
 
 **Parent:** [PCE_OTL_ProjectPlan_v2.md](PCE_OTL_ProjectPlan_v2.md) (§ Phase 2).  
 **Early slice (done):** [PCE_Phase2a_Progress.md](PCE_Phase2a_Progress.md) — M1–M3 synthetic + transforms + realized vol.  
-**`.pce` envelope & ArcticDB:** [PCE_FileFormat_And_Backends.md](PCE_FileFormat_And_Backends.md).
+**`.pce` envelope & ArcticDB:** [PCE_FileFormat_And_Backends.md](PCE_FileFormat_And_Backends.md).  
+**Post–M10 next steps (A2, tests, Arctic depth, 2b):** [PCE_NextSteps.md](PCE_NextSteps.md).
 
 This document is the **working backlog** for the rest of Phase 2: Layer 1 data nodes, Layer 2 factor nodes, shared types, and exit criteria. Update status and log as work lands.
 
@@ -21,7 +22,7 @@ This document is the **working backlog** for the rest of Phase 2: Layer 1 data n
 | **M9** | `MatrixPlug` + cross-section | 1–2 | `CrossSectionNode`, `ConnectionMatrixNode` prerequisites | **Done (no MatrixPlug)** | Panel = `rowTimes` + `valuesRowMajor` + `numColumns`; `ConnectionMatrixNode` I/O via `FloatVectorDataPlug` |
 | **M10** | Phase 2 **integration** | — | Graph: data → `RollingReturnsNode` → `RealizedVolNode`; script/`.pce` round-trip | **Done** | **`PCE-USD/1`** default (`savePceGraphFile` USDA + `customLayerData`); legacy **`PCE-GRAPH/1`** via `graphFormat="legacy"`. See [`PCE_FileFormat_And_Backends.md`](PCE_FileFormat_And_Backends.md). |
 
-**Deferred (Phase 2b / later):** `IVSurfaceNode` + `SurfacePlug`; `ScalarPlug` alias; `KyleLambdaNode`; full ArcticDB.
+**Deferred (Phase 2b / later):** dedicated **Arctic graph nodes** (e.g. on-graph publish) / enterprise ops beyond **`ArcticBackend` helpers (N4)**. **`ScalarPlug`**, **`VectorPlug`/`MatrixPlug`**, **`PackMatrixNode`**, **`PCALoadingsNode`** = **N8–N10**, **done** (see [`PCE_NextSteps.md`](PCE_NextSteps.md)). **`IVSurfaceNode` + `SurfacePlug`** = **N6**; **`KyleLambdaNode`** = **N7**.
 
 ---
 
@@ -60,3 +61,9 @@ Use **M4 + M10** as the first end-to-end story before M5–M9 depth.
 | 2026-05-16 | M6–M9: `MarketVarNode`, `FactorSeriesNode`, `CrossSectionNode`, `FamaFrenchLoadingsNode`, `ConnectionMatrixNode`; shared `MarketDataIO` / `MarketMath`. M10 script test only. |
 | 2026-05-16 | **PceGraphIO** (`PCE-GRAPH/1`) + **ArcticDB** read on `TimeSeriesStoreNode` (`arcticLibrary`); tracker [`PCE_FileFormat_And_Backends.md`](PCE_FileFormat_And_Backends.md). |
 | 2026-05-16 | **M10 closeout:** **`PCE-USD/1`** — `.pce` written as USDA (temp `.usda` + replace) with payload in root `customLayerData`; default when `pxr` available. |
+| 2026-05-16 | **N1–N3 / A2:** `GafferUI/PceFileMenu` (**File → PCE**), `Phase2ExitCriterionTest`, SRD refresh — see [`PCE_NextSteps.md`](PCE_NextSteps.md) + [`PCE_FileFormat_And_Backends.md`](PCE_FileFormat_And_Backends.md). |
+| 2026-05-16 | **N4:** Arctic `write_series_for_store` / `append_series_for_store` / `list_*` in `ArcticBackend.py`. |
+| 2026-05-16 | **N5:** `httpcsv` + `fred` backends on `MarketVarNode` / `FactorSeriesNode` (`MarketDataIO` HTTP + FRED JSON). |
+| 2026-05-16 | **N7:** `KyleLambdaNode` (`FloatPlug` λ proxy) + tests. |
+| 2026-05-16 | **N6:** `SurfacePlug` + `IVSurfaceNode` (memory + long CSV), registry + tests. |
+| 2026-05-18 | **N8–N10:** `ScalarPlug`; `VectorPlug`/`MatrixPlug`; `PackMatrixNode` + `PCALoadingsNode`; plug tests + PCA test; realized vol / Kyle λ use `ScalarPlug` `out`. |

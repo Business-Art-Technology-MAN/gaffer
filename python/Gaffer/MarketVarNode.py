@@ -46,7 +46,9 @@ from . import MarketDataTimeseries
 
 
 ## Layer 1 macro series (VIX, spreads, …): :class:`Gaffer.SeriesPlug` from **memory**,
-# **CSV**, or **Parquet**. Point-in-time uses :data:`MarketDataTimeseries.PCE_TIME_CONTEXT_KEY`.
+# **CSV**, **Parquet**, **httpcsv** (CSV at an ``http(s)`` URL), or **fred** (FRED series id in
+# ``variableName``, API key from ``PCE_FRED_API_KEY`` / ``FRED_API_KEY``). Point-in-time uses
+# :data:`MarketDataTimeseries.PCE_TIME_CONTEXT_KEY`.
 class MarketVarNode( Gaffer.ComputeNode ) :
 
 	def __init__( self, name = "MarketVar" ) :
@@ -151,8 +153,20 @@ class MarketVarNode( Gaffer.ComputeNode ) :
 			valueCol = self["parquetValueColumn"].getValue() or "value"
 			return MarketDataIO.read_parquet_two_column_series( path, valueCol )
 
+		if backend == "httpcsv" :
+			return MarketDataIO.read_series_http_csv(
+				self["resourcePath"].getValue(),
+				self["hasHeader"].getValue(),
+				self["timeColumn"].getValue(),
+				self["valueColumn"].getValue(),
+				self["delimiter"].getValue(),
+			)
+
+		if backend == "fred" :
+			return MarketDataIO.read_series_fred_observations( self["variableName"].getValue() )
+
 		raise ValueError(
-			f'MarketVarNode: unknown backend "{self["backend"].getValue()}" (expected memory, csv, or parquet).'
+			f'MarketVarNode: unknown backend "{self["backend"].getValue()}" (expected memory, csv, parquet, httpcsv, or fred).'
 		)
 
 	def compute( self, plug, context ) :

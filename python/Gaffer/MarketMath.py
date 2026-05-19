@@ -41,7 +41,8 @@ Avoids an optional ``numpy`` dependency in MarketLab unit tests / minimal instal
 
 from __future__ import annotations
 
-from typing import List, Sequence
+import math
+from typing import Dict, List, Sequence
 
 
 def linear_least_squares( X : Sequence[Sequence[float]], y : Sequence[float] ) -> List[float] :
@@ -108,3 +109,164 @@ def _gaussian_solve( A : List[List[float]], b : List[float] ) -> List[float] :
 				M[r][j] -= f * M[col][j]
 
 	return [ M[i][n] for i in range( n ) ]
+
+
+def rolling_kyle_lambda_proxy(
+	retTimes : Sequence[int],
+	retValues : Sequence[float],
+	volTimes : Sequence[int],
+	volValues : Sequence[float],
+	window : int,
+) -> float :
+	"""
+	Rolling **proxy** for Kyle's λ: last ``window`` bars of OLS ``r ~ 1 + s`` where
+	``s_i = sign(r_{i-1}) · log(1 + dollar_volume_i)`` on **time-aligned** bars.
+
+	Intended for ``KyleLambdaNode``. Returns ``0.0`` when
+	the sample is too short or the normal equations are singular.
+	"""
+
+	if window < 3 :
+		return 0.0
+
+	vmap : Dict[int, float] = {}
+	for t, v in zip( volTimes, volValues ) :
+		vmap[int( t )] = float( v )
+
+	aligned = []
+	for t, r in zip( retTimes, retValues ) :
+		t = int( t )
+		if t in vmap :
+			aligned.append( ( t, float( r ), vmap[t] ) )
+
+	if len( aligned ) < window + 1 :
+		return 0.0
+
+	aligned.sort( key = lambda z : z[0] )
+
+	xs = []
+	ys = []
+	for i in range( 1, len( aligned ) ) :
+		rPrev = aligned[i - 1][1]
+		rI = aligned[i][1]
+		vI = aligned[i][2]
+		sgn = 1.0 if rPrev >= 0.0 else -1.0
+		sI = sgn * math.log1p( max( vI, 0.0 ) )
+		xs.append( sI )
+		ys.append( rI )
+
+	if len( xs ) < window :
+		return 0.0
+
+	xs = xs[-window:]
+	ys = ys[-window:]
+	X = [ [ 1.0, x ] for x in xs ]
+
+	try :
+		beta = linear_least_squares( X, ys )
+		return float( beta[1] )
+	except ValueError :
+		return 0.0
+
+
+def _symmetric_matvec( C : List[List[float]], v : List[float] ) -> List[float] :
+
+	p = len( v )
+	return [ sum( C[i][j] * v[j] for j in range( p ) ) for i in range( p ) ]
+
+
+def _symmetric_deflate( C : List[List[float]], lam : float, v : List[float] ) -> List[List[float]] :
+
+	p = len( v )
+	return [ [ C[i][j] - lam * v[i] * v[j] for j in range( p ) ] for i in range( p ) ]
+
+
+def _top_eigenpair_power(
+	C : List[List[float]],
+	max_iter : int = 200,
+	tol : float = 1e-9,
+) -> tuple :
+	"""Dominant eigenpair of symmetric ``C`` (power iteration)."""
+
+	p = len( C )
+	if p < 1 :
+		return 0.0, []
+	# Pick an axis-aligned start so we are not orthogonal to the top eigenspace: the uniform
+	# vector ``[1,…,1]/√p`` can lie in the null space (e.g. covariance ``[[a,-a],[-a,a]]``).
+	v = None
+	for j in range( p ) :
+		unitJ = [ 1.0 if i == j else 0.0 for i in range( p ) ]
+		w0 = _symmetric_matvec( C, unitJ )
+		n0 = math.sqrt( sum( x * x for x in w0 ) )
+		if n0 >= 1e-18 :
+			v = [ x / n0 for x in w0 ]
+			break
+	if v is None :
+		return 0.0, [ 0.0 ] * p
+	lam = 0.0
+	for _ in range( max_iter ) :
+		w = _symmetric_matvec( C, v )
+		norm = math.sqrt( sum( x * x for x in w ) )
+		if norm < 1e-18 :
+			return 0.0, [ 0.0 ] * p
+		w = [ x / norm for x in w ]
+		if max( abs( w[i] - v[i] ) for i in range( p ) ) < tol :
+			v = w
+			mv = _symmetric_matvec( C, v )
+			lam = sum( v[i] * mv[i] for i in range( p ) )
+			return lam, v
+		v = w
+	mv = _symmetric_matvec( C, v )
+	lam = sum( v[i] * mv[i] for i in range( p ) )
+	return lam, v
+
+
+def pca_top_components_covariance(
+	cov : List[List[float]],
+	num_components : int,
+) -> tuple :
+	"""
+	Symmetric PSD ``cov`` (**p×p**). Returns ``(eigenvalues, eigenvectors)`` with
+	``eigenvalues[k]`` descending (clamped ``>= 0``) and unit **eigenvectors[k]** (length **p**).
+	Power iteration + symmetric deflation.
+	"""
+
+	p = len( cov )
+	if p == 0 or num_components < 1 :
+		return [], []
+	k = min( num_components, p )
+	C = [ row[:] for row in cov ]
+	evals : List[float] = []
+	evecs : List[List[float]] = []
+	for _i in range( k ) :
+		lam, v = _top_eigenpair_power( C )
+		lam = max( float( lam ), 0.0 )
+		evals.append( lam )
+		evecs.append( v )
+		if lam > 1e-18 :
+			C = _symmetric_deflate( C, lam, v )
+		else :
+			break
+	return evals, evecs
+
+
+def panel_sample_covariance( rows : List[List[float]] ) -> List[List[float]] :
+	"""``rows`` is **n×p** (demeaned manually before call **not** required — we demean here)."""
+
+	n = len( rows )
+	if n < 2 :
+		return []
+	p = len( rows[0] )
+	if p < 1 :
+		return []
+	for row in rows :
+		if len( row ) != p :
+			return []
+	mean = [ sum( float( rows[r][j] ) for r in range( n ) ) / n for j in range( p ) ]
+	Xc = [ [ float( rows[r][j] ) - mean[j] for j in range( p ) ] for r in range( n ) ]
+	div = float( n - 1 )
+	cov = [ [ 0.0 ] * p for _ in range( p ) ]
+	for i in range( p ) :
+		for j in range( p ) :
+			cov[i][j] = sum( Xc[r][i] * Xc[r][j] for r in range( n ) ) / div
+	return cov

@@ -54,9 +54,8 @@ def _rollingSampleStdDev( valuesSegment ) :
 
 ## Annualized realized volatility from the trailing window of a **return** series.
 # Uses the last `window` samples of `in.values`, sample standard deviation, times
-# `annualizationFactor` (e.g. ``sqrt(252)`` for daily returns). Output is a single
-# :class:`FloatPlug` (Phase 2 `ScalarPlug` not implemented yet). If there are fewer
-# than `window` samples (or `window` < 2), **out** is ``0.0``.
+# `annualizationFactor` (e.g. ``sqrt(252)`` for daily returns). Output is a
+# :class:`Gaffer.ScalarPlug`. If there are fewer than `window` samples (or `window` < 2), **out** is ``0.0``.
 class RealizedVolNode( Gaffer.ComputeNode ) :
 
 	def __init__( self, name = "RealizedVol" ) :
@@ -67,7 +66,7 @@ class RealizedVolNode( Gaffer.ComputeNode ) :
 		self["window"] = Gaffer.IntPlug( defaultValue = 20, minValue = 2 )
 		self["annualizationFactor"] = Gaffer.FloatPlug( defaultValue = math.sqrt( 252.0 ) )
 
-		self["out"] = Gaffer.FloatPlug( direction = Gaffer.Plug.Direction.Out )
+		self["out"] = Gaffer.ScalarPlug( direction = Gaffer.Plug.Direction.Out )
 
 	def affects( self, inputPlug ) :
 

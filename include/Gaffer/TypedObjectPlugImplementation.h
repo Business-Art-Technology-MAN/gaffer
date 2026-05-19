@@ -66,7 +66,7 @@ TypedObjectPlug<T>::~TypedObjectPlug()
 template<class T>
 bool TypedObjectPlug<T>::acceptsInput( const Plug *input ) const
 {
-	if( !ValuePlug::acceptsInput( input ) )
+	if( !Plug::acceptsInput( input ) )
 	{
 		return false;
 	}

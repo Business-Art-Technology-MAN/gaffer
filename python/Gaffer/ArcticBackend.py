@@ -34,9 +34,12 @@
 #
 ##########################################################################
 
-"""Optional ArcticDB read path for :class:`TimeSeriesStoreNode`. Requires PyPI ``arcticdb`` (+ ``pandas``)."""
+"""ArcticDB path for :class:`TimeSeriesStoreNode` and helpers (N4: write / append / catalog). Requires PyPI ``arcticdb`` (+ ``pandas``)."""
 
 from __future__ import annotations
+
+import os
+import warnings
 
 from typing import List, Tuple
 
@@ -49,6 +52,156 @@ def arcticdbAvailable() -> bool :
 	except ImportError :
 		return False
 	return True
+
+
+def _arcticAndPandas() -> Tuple[object, object] :
+
+	try :
+		from arcticdb import Arctic
+		import pandas as pd
+	except ImportError as e :
+		raise RuntimeError(
+			"ArcticBackend: requires PyPI packages `arcticdb` and `pandas`."
+		) from e
+
+	return Arctic, pd
+
+
+def _normaliseUri( arcticUri : str ) -> str :
+
+	uri = ( arcticUri or "" ).strip()
+	if not uri :
+		raise RuntimeError(
+			"ArcticBackend: requires a non-empty arcticUri (Arctic URI / storage id)."
+		)
+
+	uri = os.path.expanduser( os.path.expandvars( uri ) )
+
+	# Real URIs must not go through os.path.normpath — on Windows it corrupts e.g.
+	# ``lmdb://C:/Users/...`` into ``lmdb:\C:\Users\...``, which ArcticDB rejects.
+	if "://" in uri :
+		return uri
+
+	# Repair already-mangled LMDB paths (e.g. after normpath) for Windows.
+	if uri.lower().startswith( "lmdb:" ) :
+		_unused, _sep, rest = uri.partition( ":" )
+		rest = rest.lstrip( "\\/" )
+		return "lmdb://" + rest.replace( "\\", "/" )
+
+	return os.path.normpath( uri )
+
+
+def _resolveLibrary( ac : object, libraryName : str, *, createIfMissing : bool = False ) -> object :
+
+	name = libraryName.strip() or "pce"
+	if createIfMissing :
+		libs = ac.list_libraries()
+		if name not in libs :
+			ac.create_library( name )
+
+	try :
+		return ac.get_library( name )
+	except Exception : # noqa: BLE001
+		try :
+			return ac[name]
+		except Exception as e2 :
+			raise RuntimeError(
+				f"ArcticBackend: library {name!r} not available: {e2}"
+			) from e2
+
+
+def list_libraries( arcticUri : str ) -> List[str] :
+
+	"""List Arctic library names at ``arcticUri`` (sorted)."""
+
+	Arctic, _pd = _arcticAndPandas()
+	ac = Arctic( _normaliseUri( arcticUri ) )
+	return sorted( ac.list_libraries() )
+
+
+def list_symbols( arcticUri : str, libraryName : str ) -> List[str] :
+
+	"""
+	List symbol names in ``libraryName`` (sorted). The library must exist.
+	"""
+
+	Arctic, _pd = _arcticAndPandas()
+	ac = Arctic( _normaliseUri( arcticUri ) )
+	lib = _resolveLibrary( ac, libraryName, createIfMissing = False )
+	return sorted( lib.list_symbols() )
+
+
+def _timesAndValuesToDataFrame( pd : object, times : List[int], values : List[float], valueColumn : str ) -> object :
+
+	if len( times ) != len( values ) :
+		raise RuntimeError(
+			f"ArcticBackend: times and values length mismatch ({len( times )} vs {len( values )})."
+		)
+
+	col = valueColumn if valueColumn else "value"
+	if not times :
+		# Empty frame with typed index/column for schema-stable append workflows
+		idx = pd.DatetimeIndex( [] )
+		return pd.DataFrame( { col : [] }, index = idx )
+
+	# Heuristic: very large ints → nanosecond UTC wall time (matches read path for DatetimeIndex).
+	if times[0] > 10 ** 15 :
+		idx = pd.to_datetime( times, unit = "ns" )
+	else :
+		idx = pd.Index( times, dtype = "int64" )
+
+	return pd.DataFrame( { col : values }, index = idx )
+
+
+def write_series_for_store(
+	arcticUri : str,
+	libraryName : str,
+	symbol : str,
+	times : List[int],
+	values : List[float],
+	valueColumn : str,
+	*,
+	createLibrary : bool = True,
+) -> None :
+
+	"""
+	``library.write(symbol, df)`` — replaces the symbol’s data with ``(times, values)``.
+
+	:param createLibrary: if true (default), create ``libraryName`` when missing.
+	:param valueColumn: dataframe column name (should match ``TimeSeriesStoreNode.field`` when round-tripping reads).
+	"""
+
+	if not str( symbol ).strip() :
+		raise RuntimeError( "ArcticBackend: write requires a non-empty symbol." )
+
+	Arctic, pd = _arcticAndPandas()
+	ac = Arctic( _normaliseUri( arcticUri ) )
+	lib = _resolveLibrary( ac, libraryName, createIfMissing = createLibrary )
+	df = _timesAndValuesToDataFrame( pd, times, values, valueColumn )
+	lib.write( symbol, df )
+
+
+def append_series_for_store(
+	arcticUri : str,
+	libraryName : str,
+	symbol : str,
+	times : List[int],
+	values : List[float],
+	valueColumn : str,
+) -> None :
+
+	"""
+	``library.append(symbol, df)`` — appends rows; **symbol must exist** and new rows must continue the index per the ArcticDB rules.
+	"""
+
+	if not symbol.strip() :
+		raise RuntimeError( "ArcticBackend: append requires a non-empty symbol." )
+
+	Arctic, pd = _arcticAndPandas()
+	ac = Arctic( _normaliseUri( arcticUri ) )
+	lib = _resolveLibrary( ac, libraryName, createIfMissing = False )
+	df = _timesAndValuesToDataFrame( pd, times, values, valueColumn )
+	lib.append( symbol, df )
 
 
 def read_series_for_store(
@@ -64,34 +217,16 @@ def read_series_for_store(
 	- **Values**: column ``valueColumn`` if present, else ``"value"``, else first numeric column.
 	"""
 
-	try :
-		from arcticdb import Arctic
-	except ImportError as e :
-		raise RuntimeError(
-			"TimeSeriesStoreNode: arcticdb backend requires PyPI packages `arcticdb` and `pandas`."
-		) from e
-
-	import pandas as pd
-
-	uri = arcticUri.strip()
-	if not uri :
-		raise RuntimeError(
-			"TimeSeriesStoreNode: arcticdb backend requires a non-empty resourcePath (Arctic URI)."
-		)
-
-	ac = Arctic( uri )
-	try :
-		lib = ac.get_library( libraryName )
-	except Exception : # noqa: BLE001
-		try :
-			lib = ac[libraryName]
-		except Exception as e2 :
-			raise RuntimeError(
-				f"TimeSeriesStoreNode: ArcticDB library {libraryName!r} not available at {uri!r}: {e2}"
-			) from e2
+	Arctic, pd = _arcticAndPandas()
+	ac = Arctic( _normaliseUri( arcticUri ) )
+	lib = _resolveLibrary( ac, libraryName, createIfMissing = False )
 
 	try :
-		item = lib.read( symbol )
+		# ArcticDB builds DataFrames via pandas internals that emit DeprecationWarning on
+		# recent pandas; Gaffer's compute treats warnings as errors.
+		with warnings.catch_warnings() :
+			warnings.simplefilter( "ignore", DeprecationWarning )
+			item = lib.read( symbol )
 	except Exception as e :
 		raise RuntimeError(
 			f'TimeSeriesStoreNode: ArcticDB read failed for symbol {symbol!r}: {e}'
@@ -123,7 +258,6 @@ def read_series_for_store(
 	elif hasattr( idx, "dtype" ) and str( idx.dtype ).startswith( "int" ) :
 		times = [ int( x ) for x in idx.tolist() ]
 	else :
-		# Fallback: positional bar indices
 		times = list( range( len( df ) ) )
 
 	values = [ float( x ) for x in df[colName].tolist() ]

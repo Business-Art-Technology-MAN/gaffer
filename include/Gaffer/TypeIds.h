@@ -160,6 +160,10 @@ enum TypeId
 	SignalClosurePlugTypeId = 118113,
 	WeightVectorPlugTypeId = 118114,
 	MarketContextPlugTypeId = 118115,
+	SurfacePlugTypeId = 118116,
+	ScalarPlugTypeId = 118117,
+	VectorPlugTypeId = 118118,
+	MatrixPlugTypeId = 118119,
 
 	LastTypeId = 118799
 

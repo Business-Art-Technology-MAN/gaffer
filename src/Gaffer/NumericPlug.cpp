@@ -37,6 +37,7 @@
 
 #include "Gaffer/NumericPlug.h"
 
+#include "Gaffer/ScalarPlug.h"
 #include "Gaffer/TypedPlug.h"
 
 #include "Imath/ImathFun.h"
@@ -79,7 +80,7 @@ NumericPlug<T>::~NumericPlug()
 template<class T>
 bool NumericPlug<T>::acceptsInput( const Plug *input ) const
 {
-	if( !ValuePlug::acceptsInput( input ) )
+	if( !Plug::acceptsInput( input ) )
 	{
 		return false;
 	}
@@ -140,7 +141,11 @@ void NumericPlug<T>::setValue( T value )
 template<class T>
 void NumericPlug<T>::setFrom( const ValuePlug *other )
 {
-	if( const FloatPlug *p = runTimeCast<const FloatPlug>( other ) )
+	if( const ScalarPlug *p = runTimeCast<const ScalarPlug>( other ) )
+	{
+		setValue( static_cast<T>( p->getValue() ) );
+	}
+	else if( const FloatPlug *p = runTimeCast<const FloatPlug>( other ) )
 	{
 		setValue( static_cast<T>( p->getValue() ) );
 	}

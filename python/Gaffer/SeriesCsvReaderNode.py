@@ -49,6 +49,47 @@ def _normaliseFilePath( filePath ) :
 	return os.path.normpath( os.path.expanduser( os.path.expandvars( filePath.strip() ) ) )
 
 
+def _readSeriesCsvRows( rows, hasHeader, timeColumn, valueColumn ) :
+
+	times = []
+	values = []
+	if hasHeader and rows :
+		rows = rows[1:]
+
+	need = max( timeColumn, valueColumn ) + 1
+	for row in rows :
+		if len( row ) < need :
+			continue
+		try :
+			t = int( float( row[timeColumn].strip() ) )
+			v = float( row[valueColumn].strip() )
+		except ValueError :
+			continue
+		times.append( t )
+		values.append( v )
+
+	return times, values
+
+
+def _readSeriesCsvFromString( text, hasHeader, timeColumn, valueColumn, delimiter ) :
+
+	import io
+
+	if not ( text or "" ).strip() :
+		return [], []
+
+	delim = delimiter if delimiter else ","
+	delim = delim[0]
+
+	try :
+		reader = csv.reader( io.StringIO( text ), delimiter = delim )
+		rows = list( reader )
+	except csv.Error :
+		return [], []
+
+	return _readSeriesCsvRows( rows, hasHeader, timeColumn, valueColumn )
+
+
 def _readSeriesCsv( filePath, hasHeader, timeColumn, valueColumn, delimiter ) :
 
 	times = []
@@ -67,22 +108,7 @@ def _readSeriesCsv( filePath, hasHeader, timeColumn, valueColumn, delimiter ) :
 	except OSError :
 		return times, values
 
-	if hasHeader and rows :
-		rows = rows[1:]
-
-	need = max( timeColumn, valueColumn ) + 1
-	for row in rows :
-		if len( row ) < need :
-			continue
-		try :
-			t = int( float( row[timeColumn].strip() ) )
-			v = float( row[valueColumn].strip() )
-		except ValueError :
-			continue
-		times.append( t )
-		values.append( v )
-
-	return times, values
+	return _readSeriesCsvRows( rows, hasHeader, timeColumn, valueColumn )
 
 
 ## Layer 1-style reader: loads two CSV columns into a :class:`SeriesPlug`.

@@ -43,6 +43,7 @@
 
 #include "Gaffer/Node.h"
 #include "Gaffer/NumericPlug.h"
+#include "Gaffer/ScalarPlug.h"
 
 #include "IECorePython/RunTimeTypedBinding.h"
 #include "IECorePython/ScopedGILRelease.h"
@@ -109,5 +110,6 @@ void bind()
 void GafferModule::bindNumericPlug()
 {
 	bind<FloatPlug>();
+	bind<ScalarPlug>();
 	bind<IntPlug>();
 }

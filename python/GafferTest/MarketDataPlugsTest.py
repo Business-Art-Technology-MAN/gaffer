@@ -128,18 +128,83 @@ class MarketDataPlugsTest( GafferTest.TestCase ) :
 		self.assertFloat32Equal( p.termSpreadPlug().getValue(), 0.5 )
 		self.assertFloat32Equal( p.creditSpreadPlug().getValue(), 1.2 )
 
+	def testSurfacePlug( self ) :
+
+		p = Gaffer.SurfacePlug()
+		self.assertEqual( p.getName(), "SurfacePlug" )
+		p.asOfTimePlug().setValue( "1700000000" )
+		p.strikesPlug().setValue( IECore.FloatVectorData( [ 90.0, 100.0 ] ) )
+		p.expiriesPlug().setValue( IECore.FloatVectorData( [ 0.25, 1.0 ] ) )
+		p.ivsRowMajorPlug().setValue(
+			IECore.FloatVectorData( [ 0.2, 0.22, 0.21, 0.24 ] )
+		)
+
+		self.assertEqual( p.asOfTimePlug().getValue(), "1700000000" )
+		self.assertEqual(
+			self.__floatVectorReadable32( p.strikesPlug().getValue() ),
+			[ GafferTest.asFloat32( x ) for x in ( 90.0, 100.0 ) ],
+		)
+		self.assertEqual(
+			self.__floatVectorReadable32( p.expiriesPlug().getValue() ),
+			[ GafferTest.asFloat32( x ) for x in ( 0.25, 1.0 ) ],
+		)
+		self.assertEqual(
+			self.__floatVectorReadable32( p.ivsRowMajorPlug().getValue() ),
+			[ GafferTest.asFloat32( x ) for x in ( 0.2, 0.22, 0.21, 0.24 ) ],
+		)
+
+		o = p.createCounterpart( "ivOut", Gaffer.Plug.Direction.Out )
+		self.assertEqual( o.getName(), "ivOut" )
+		self.assertTrue( isinstance( o, Gaffer.SurfacePlug ) )
+
+	def testVectorPlug( self ) :
+
+		p = Gaffer.VectorPlug()
+		p.valuesPlug().setValue( IECore.FloatVectorData( [ 1.0, 2.0, 3.0 ] ) )
+		self.assertEqual(
+			self.__floatVectorReadable32( p.valuesPlug().getValue() ),
+			[ GafferTest.asFloat32( x ) for x in ( 1.0, 2.0, 3.0 ) ],
+		)
+
+	def testMatrixPlug( self ) :
+
+		p = Gaffer.MatrixPlug()
+		p.rowTimesPlug().setValue( IECore.Int64VectorData( [ 1, 2 ] ) )
+		p.valuesRowMajorPlug().setValue( IECore.FloatVectorData( [ 0.0, 1.0, 2.0, 3.0 ] ) )
+		p.numColumnsPlug().setValue( 2 )
+		self.assertEqual( p.numColumnsPlug().getValue(), 2 )
+
+	def testScalarToFloatConnection( self ) :
+
+		s = Gaffer.ScriptNode()
+		s["n"] = Gaffer.Node()
+		dynamic = Gaffer.Plug.Flags.Default | Gaffer.Plug.Flags.Dynamic
+		s["n"]["a"] = Gaffer.ScalarPlug( direction = Gaffer.Plug.Direction.Out, flags = dynamic )
+		s["n"]["b"] = Gaffer.FloatPlug( flags = dynamic )
+		s["n"]["b"].setInput( s["n"]["a"] )
+		self.assertTrue( s["n"]["b"].getInput().isSame( s["n"]["a"] ) )
+
 	def testIncompatibleCompoundInput( self ) :
 
 		series = Gaffer.SeriesPlug()
 		sig = Gaffer.SignalClosurePlug()
 		weights = Gaffer.WeightVectorPlug()
 		ctx = Gaffer.MarketContextPlug()
+		surf = Gaffer.SurfacePlug()
+		vec = Gaffer.VectorPlug()
+		mat = Gaffer.MatrixPlug()
 		self.assertFalse( series.acceptsInput( sig ) )
 		self.assertFalse( sig.acceptsInput( series ) )
 		self.assertFalse( series.acceptsInput( weights ) )
 		self.assertFalse( weights.acceptsInput( series ) )
 		self.assertFalse( series.acceptsInput( ctx ) )
 		self.assertFalse( ctx.acceptsInput( series ) )
+		self.assertFalse( series.acceptsInput( surf ) )
+		self.assertFalse( surf.acceptsInput( series ) )
+		self.assertFalse( series.acceptsInput( vec ) )
+		self.assertFalse( vec.acceptsInput( series ) )
+		self.assertFalse( series.acceptsInput( mat ) )
+		self.assertFalse( mat.acceptsInput( series ) )
 
 	def testRunTimeTyped( self ) :
 
@@ -148,6 +213,10 @@ class MarketDataPlugsTest( GafferTest.TestCase ) :
 			Gaffer.SignalClosurePlug,
 			Gaffer.WeightVectorPlug,
 			Gaffer.MarketContextPlug,
+			Gaffer.SurfacePlug,
+			Gaffer.VectorPlug,
+			Gaffer.MatrixPlug,
+			Gaffer.ScalarPlug,
 		) :
 			p = plugType()
 			self.assertNotEqual( p.typeId(), Gaffer.ValuePlug.staticTypeId() )
@@ -160,6 +229,9 @@ class MarketDataPlugsTest( GafferTest.TestCase ) :
 			( Gaffer.SignalClosurePlug, "alphaWeight" ),
 			( Gaffer.WeightVectorPlug, "instrumentIds" ),
 			( Gaffer.MarketContextPlug, "timeNanoseconds" ),
+			( Gaffer.SurfacePlug, "asOfTime" ),
+			( Gaffer.VectorPlug, "values" ),
+			( Gaffer.MatrixPlug, "rowTimes" ),
 		) :
 			p = plugFactory()
 			self.assertEqual( Gaffer.Metadata.value( p, "nodule:type" ), "GafferUI::CompoundNodule" )
@@ -232,6 +304,55 @@ class MarketDataPlugsTest( GafferTest.TestCase ) :
 		self.assertFloat32Equal( mcCopy.termSpreadPlug().getValue(), mc.termSpreadPlug().getValue() )
 		self.assertFloat32Equal( mcCopy.creditSpreadPlug().getValue(), mc.creditSpreadPlug().getValue() )
 
+		surf = Gaffer.SurfacePlug()
+		surf.asOfTimePlug().setValue( "snap1" )
+		surf.strikesPlug().setValue( IECore.FloatVectorData( [ 100.0 ] ) )
+		surf.expiriesPlug().setValue( IECore.FloatVectorData( [ 0.5 ] ) )
+		surf.ivsRowMajorPlug().setValue( IECore.FloatVectorData( [ 0.3 ] ) )
+		surfCopy = Gaffer.SurfacePlug()
+		sd = MarketDataAlgo.surfacePlugToDict( surf )
+		self.assertEqual( json.loads( json.dumps( sd ) ), sd )
+		MarketDataAlgo.applySurfacePlugDict( surfCopy, sd )
+		self.assertEqual( surfCopy.asOfTimePlug().getValue(), surf.asOfTimePlug().getValue() )
+		self.assertEqual(
+			self.__floatVectorReadable32( surfCopy.strikesPlug().getValue() ),
+			self.__floatVectorReadable32( surf.strikesPlug().getValue() ),
+		)
+		self.assertEqual(
+			self.__floatVectorReadable32( surfCopy.expiriesPlug().getValue() ),
+			self.__floatVectorReadable32( surf.expiriesPlug().getValue() ),
+		)
+		self.assertEqual(
+			self.__floatVectorReadable32( surfCopy.ivsRowMajorPlug().getValue() ),
+			self.__floatVectorReadable32( surf.ivsRowMajorPlug().getValue() ),
+		)
+
+		vec = Gaffer.VectorPlug()
+		vec.valuesPlug().setValue( IECore.FloatVectorData( [ 0.25, 0.75 ] ) )
+		vecCopy = Gaffer.VectorPlug()
+		vd = MarketDataAlgo.vectorPlugToDict( vec )
+		self.assertEqual( json.loads( json.dumps( vd ) ), vd )
+		MarketDataAlgo.applyVectorPlugDict( vecCopy, vd )
+		self.assertEqual(
+			self.__floatVectorReadable32( vecCopy.valuesPlug().getValue() ),
+			self.__floatVectorReadable32( vec.valuesPlug().getValue() ),
+		)
+
+		mat = Gaffer.MatrixPlug()
+		mat.rowTimesPlug().setValue( IECore.Int64VectorData( [ 5, 6 ] ) )
+		mat.valuesRowMajorPlug().setValue( IECore.FloatVectorData( [ 1.0, 2.0, 3.0, 4.0 ] ) )
+		mat.numColumnsPlug().setValue( 2 )
+		matCopy = Gaffer.MatrixPlug()
+		mdm = MarketDataAlgo.matrixPlugToDict( mat )
+		self.assertEqual( json.loads( json.dumps( mdm ) ), mdm )
+		MarketDataAlgo.applyMatrixPlugDict( matCopy, mdm )
+		self.assertEqual( matCopy.rowTimesPlug().getValue(), mat.rowTimesPlug().getValue() )
+		self.assertEqual(
+			self.__floatVectorReadable32( matCopy.valuesRowMajorPlug().getValue() ),
+			self.__floatVectorReadable32( mat.valuesRowMajorPlug().getValue() ),
+		)
+		self.assertEqual( matCopy.numColumnsPlug().getValue(), mat.numColumnsPlug().getValue() )
+
 	def testDynamicSerialisation( self ) :
 
 		dynamic = Gaffer.Plug.Flags.Default | Gaffer.Plug.Flags.Dynamic
@@ -254,6 +375,17 @@ class MarketDataPlugsTest( GafferTest.TestCase ) :
 		s["n"]["mc"].vixLevelPlug().setValue( 22.0 )
 		s["n"]["mc"].termSpreadPlug().setValue( 0.4 )
 		s["n"]["mc"].creditSpreadPlug().setValue( 1.1 )
+		s["n"]["surf"] = Gaffer.SurfacePlug( flags = dynamic )
+		s["n"]["surf"].asOfTimePlug().setValue( "s1" )
+		s["n"]["surf"].strikesPlug().setValue( IECore.FloatVectorData( [ 1.0, 2.0 ] ) )
+		s["n"]["surf"].expiriesPlug().setValue( IECore.FloatVectorData( [ 0.1 ] ) )
+		s["n"]["surf"].ivsRowMajorPlug().setValue( IECore.FloatVectorData( [ 0.15, 0.16 ] ) )
+		s["n"]["vec"] = Gaffer.VectorPlug( flags = dynamic )
+		s["n"]["vec"].valuesPlug().setValue( IECore.FloatVectorData( [ 9.0, 8.0 ] ) )
+		s["n"]["mat"] = Gaffer.MatrixPlug( flags = dynamic )
+		s["n"]["mat"].rowTimesPlug().setValue( IECore.Int64VectorData( [ 1 ] ) )
+		s["n"]["mat"].valuesRowMajorPlug().setValue( IECore.FloatVectorData( [ 3.0 ] ) )
+		s["n"]["mat"].numColumnsPlug().setValue( 1 )
 
 		ss = s.serialise()
 		s2 = Gaffer.ScriptNode()
@@ -280,6 +412,98 @@ class MarketDataPlugsTest( GafferTest.TestCase ) :
 		self.assertFloat32Equal( s2["n"]["mc"].vixLevelPlug().getValue(), 22.0 )
 		self.assertFloat32Equal( s2["n"]["mc"].termSpreadPlug().getValue(), 0.4 )
 		self.assertFloat32Equal( s2["n"]["mc"].creditSpreadPlug().getValue(), 1.1 )
+		self.assertEqual( s2["n"]["surf"].asOfTimePlug().getValue(), "s1" )
+		self.assertEqual(
+			self.__floatVectorReadable32( s2["n"]["surf"].strikesPlug().getValue() ),
+			[ GafferTest.asFloat32( x ) for x in ( 1.0, 2.0 ) ],
+		)
+		self.assertEqual(
+			self.__floatVectorReadable32( s2["n"]["surf"].expiriesPlug().getValue() ),
+			[ GafferTest.asFloat32( x ) for x in ( 0.1, ) ],
+		)
+		self.assertEqual(
+			self.__floatVectorReadable32( s2["n"]["surf"].ivsRowMajorPlug().getValue() ),
+			[ GafferTest.asFloat32( x ) for x in ( 0.15, 0.16 ) ],
+		)
+		self.assertEqual(
+			self.__floatVectorReadable32( s2["n"]["vec"].valuesPlug().getValue() ),
+			[ GafferTest.asFloat32( x ) for x in ( 9.0, 8.0 ) ],
+		)
+		self.assertEqual( s2["n"]["mat"].rowTimesPlug().getValue(), IECore.Int64VectorData( [ 1 ] ) )
+		self.assertEqual(
+			self.__floatVectorReadable32( s2["n"]["mat"].valuesRowMajorPlug().getValue() ),
+			[ GafferTest.asFloat32( x ) for x in ( 3.0, ) ],
+		)
+		self.assertEqual( s2["n"]["mat"].numColumnsPlug().getValue(), 1 )
+
+
+class PCALoadingsNodeTest( GafferTest.TestCase ) :
+
+	def testPackMatrixRoundsTrip( self ) :
+
+		p = Gaffer.PackMatrixNode()
+		p["panelRowTimes"].setValue( IECore.Int64VectorData( [ 1, 2, 3 ] ) )
+		p["panelValuesRowMajor"].setValue( IECore.FloatVectorData( [ 1.0, 2.0, 3.0, 4.0, 5.0, 6.0 ] ) )
+		p["panelNumColumns"].setValue( 2 )
+
+		self.assertEqual( list( p["out"]["rowTimes"].getValue() ), [ 1, 2, 3 ] )
+		self.assertEqual(
+			[ GafferTest.asFloat32( x ) for x in p["out"]["valuesRowMajor"].getValue() ],
+			[ GafferTest.asFloat32( x ) for x in ( 1.0, 2.0, 3.0, 4.0, 5.0, 6.0 ) ],
+		)
+		self.assertEqual( p["out"]["numColumns"].getValue(), 2 )
+
+	def testPCARollingOutputs( self ) :
+
+		n = Gaffer.PCALoadingsNode()
+		# 5 rows, 2 columns; window 4
+		n["in"]["rowTimes"].setValue( IECore.Int64VectorData( [ 10, 20, 30, 40, 50 ] ) )
+		n["in"]["valuesRowMajor"].setValue(
+			IECore.FloatVectorData(
+				[
+					1.0, 0.0,
+					1.0, 0.0,
+					0.0, 1.0,
+					0.0, 1.0,
+					1.0, 0.0,
+				]
+			)
+		)
+		n["in"]["numColumns"].setValue( 2 )
+		n["window"].setValue( 4 )
+		n["numComponents"].setValue( 2 )
+
+		load = list( n["loadings"]["values"].getValue() )
+		self.assertEqual( len( load ), 4 )
+		var = list( n["varianceExplained"]["values"].getValue() )
+		self.assertEqual( len( var ), 2 )
+		self.assertAlmostEqual( sum( var ), 1.0, places = 5 )
+
+		times = list( n["pc1Scores"]["times"].getValue() )
+		vals = [ float( x ) for x in n["pc1Scores"]["values"].getValue() ]
+		self.assertEqual( times, [ 40, 50 ] )
+		self.assertEqual( len( vals ), 2 )
+
+	def testSerialisation( self ) :
+
+		script = Gaffer.ScriptNode()
+		script["pca"] = Gaffer.PCALoadingsNode()
+		script["pack"] = Gaffer.PackMatrixNode()
+		script["pack"]["panelRowTimes"].setValue( IECore.Int64VectorData( [ 1, 2 ] ) )
+		script["pack"]["panelValuesRowMajor"].setValue( IECore.FloatVectorData( [ 0.0, 1.0, 2.0, 3.0 ] ) )
+		script["pack"]["panelNumColumns"].setValue( 2 )
+		script["pca"]["in"].setInput( script["pack"]["out"] )
+		script["pca"]["window"].setValue( 2 )
+
+		s = script.serialise()
+		s2 = Gaffer.ScriptNode()
+		s2.execute( s )
+
+		self.assertEqual( s2["pca"]["window"].getValue(), 2 )
+		self.assertEqual( len( s2["pack"]["out"]["rowTimes"].getValue() ), 2 )
+
+
+MarketDataPlugsTest.PCALoadingsNodeTest = PCALoadingsNodeTest
 
 if __name__ == "__main__":
 	unittest.main()

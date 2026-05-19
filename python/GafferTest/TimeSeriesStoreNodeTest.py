@@ -172,6 +172,8 @@ class TimeSeriesStoreNodeTest( GafferTest.TestCase ) :
 			lib = ac["pce"]
 			idx = pd.date_range( "2020-01-01", periods = 3, freq = "D" )
 			lib.write( "AAA", pd.DataFrame( { "close": [ 10.0, 11.0, 12.0 ] }, index = idx ) )
+			# LMDB: one open per path per process — release before the store opens the same URI.
+			del lib, ac
 
 			n = Gaffer.TimeSeriesStoreNode()
 			n["backend"].setValue( "arcticdb" )
@@ -187,6 +189,105 @@ class TimeSeriesStoreNodeTest( GafferTest.TestCase ) :
 			)
 		finally :
 			shutil.rmtree( d, ignore_errors = True )
+
+	@unittest.skipUnless( Gaffer.ArcticBackend.arcticdbAvailable(), "arcticdb / pandas not installed" )
+	def testArcticDbWriteThenReadViaStore( self ) :
+
+		import shutil
+
+		import pandas as pd
+
+		d = tempfile.mkdtemp( prefix = "gaffer_arctic_w_" )
+		try :
+			uri = "lmdb://" + os.path.abspath( d ).replace( "\\", "/" )
+			idx = pd.date_range( "2020-01-01", periods = 3, freq = "D" )
+			times = [ int( ts.value ) for ts in idx ]
+			values = [ 10.0, 11.0, 12.0 ]
+
+			Gaffer.ArcticBackend.write_series_for_store(
+				uri, "pce", "ZZ", times, values, "close", createLibrary = True,
+			)
+
+			n = Gaffer.TimeSeriesStoreNode()
+			n["backend"].setValue( "arcticdb" )
+			n["resourcePath"].setValue( uri )
+			n["arcticLibrary"].setValue( "pce" )
+			n["instrumentId"].setValue( "ZZ" )
+			n["field"].setValue( "close" )
+
+			self.assertEqual( len( n["out"]["times"].getValue() ), 3 )
+			self.assertEqual(
+				self.__floatValues( n["out"]["values"].getValue() ),
+				[ GafferTest.asFloat32( x ) for x in ( 10.0, 11.0, 12.0 ) ],
+			)
+		finally :
+			shutil.rmtree( d, ignore_errors = True )
+
+	@unittest.skipUnless( Gaffer.ArcticBackend.arcticdbAvailable(), "arcticdb / pandas not installed" )
+	def testArcticDbAppendThenRead( self ) :
+
+		import shutil
+
+		import pandas as pd
+
+		d = tempfile.mkdtemp( prefix = "gaffer_arctic_a_" )
+		try :
+			uri = "lmdb://" + os.path.abspath( d ).replace( "\\", "/" )
+			idx0 = pd.date_range( "2020-01-01", periods = 2, freq = "D" )
+			t0 = [ int( ts.value ) for ts in idx0 ]
+			Gaffer.ArcticBackend.write_series_for_store(
+				uri, "pce", "APP", t0, [ 1.0, 2.0 ], "close", createLibrary = True,
+			)
+			idx1 = pd.date_range( "2020-01-03", periods = 1, freq = "D" )
+			t1 = [ int( ts.value ) for ts in idx1 ]
+			Gaffer.ArcticBackend.append_series_for_store(
+				uri, "pce", "APP", t1, [ 3.0 ], "close",
+			)
+
+			n = Gaffer.TimeSeriesStoreNode()
+			n["backend"].setValue( "arcticdb" )
+			n["resourcePath"].setValue( uri )
+			n["arcticLibrary"].setValue( "pce" )
+			n["instrumentId"].setValue( "APP" )
+			n["field"].setValue( "close" )
+
+			self.assertEqual( len( n["out"]["times"].getValue() ), 3 )
+			self.assertEqual(
+				self.__floatValues( n["out"]["values"].getValue() ),
+				[ GafferTest.asFloat32( x ) for x in ( 1.0, 2.0, 3.0 ) ],
+			)
+		finally :
+			shutil.rmtree( d, ignore_errors = True )
+
+	@unittest.skipUnless( Gaffer.ArcticBackend.arcticdbAvailable(), "arcticdb / pandas not installed" )
+	def testArcticDbListLibrariesAndSymbols( self ) :
+
+		import shutil
+
+		import pandas as pd
+
+		d = tempfile.mkdtemp( prefix = "gaffer_arctic_ls_" )
+		try :
+			uri = "lmdb://" + os.path.abspath( d ).replace( "\\", "/" )
+			self.assertEqual( Gaffer.ArcticBackend.list_libraries( uri ), [] )
+
+			idx = pd.date_range( "2020-01-01", periods = 1, freq = "D" )
+			t = [ int( ts.value ) for ts in idx ]
+			Gaffer.ArcticBackend.write_series_for_store(
+				uri, "pce2", "SYM_A", t, [ 42.0 ], "close", createLibrary = True,
+			)
+			Gaffer.ArcticBackend.write_series_for_store(
+				uri, "pce2", "SYM_B", t, [ 43.0 ], "close", createLibrary = False,
+			)
+
+			self.assertEqual( Gaffer.ArcticBackend.list_libraries( uri ), [ "pce2" ] )
+			self.assertEqual(
+				Gaffer.ArcticBackend.list_symbols( uri, "pce2" ),
+				[ "SYM_A", "SYM_B" ],
+			)
+		finally :
+			shutil.rmtree( d, ignore_errors = True )
+
 	def testUnknownBackend( self ) :
 
 		n = Gaffer.TimeSeriesStoreNode()

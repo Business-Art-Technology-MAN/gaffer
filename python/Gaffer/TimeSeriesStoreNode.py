@@ -144,7 +144,8 @@ class TimeSeriesStoreNode( Gaffer.ComputeNode ) :
 			return _readParquetSeries( path, field )
 
 		if backend == "arcticdb" :
-			uri = _normaliseResourcePath( self["resourcePath"].getValue() )
+			# Do not use normalise_resource_path (normpath breaks lmdb://… on Windows).
+			uri = ArcticBackend._normaliseUri( self["resourcePath"].getValue() )
 			return ArcticBackend.read_series_for_store(
 				uri,
 				self["arcticLibrary"].getValue().strip() or "pce",

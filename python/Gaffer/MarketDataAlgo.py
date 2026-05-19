@@ -7,6 +7,9 @@
 """
 JSON-friendly dict interchange for Phase 1 OTL plugs (USD / layer storage helpers).
 
+Includes :class:`SeriesPlug`, :class:`SignalClosurePlug`, :class:`WeightVectorPlug`,
+:class:`MarketContextPlug`, :class:`SurfacePlug`, :class:`VectorPlug`, and :class:`MatrixPlug`.
+
 These operate on plug *values* only; use :func:`json.dumps` / :func:`json.loads` at boundaries.
 """
 
@@ -109,3 +112,51 @@ def applyMarketContextPlugDict( plug: Gaffer.MarketContextPlug, d : Mapping[str,
 		plug.termSpreadPlug().setValue( float( d["termSpread"] ) )
 	if "creditSpread" in d :
 		plug.creditSpreadPlug().setValue( float( d["creditSpread"] ) )
+
+
+def surfacePlugToDict( plug: Gaffer.SurfacePlug ) -> Dict[str, Any] :
+	return {
+		"asOfTime": plug.asOfTimePlug().getValue(),
+		"strikes": list( plug.strikesPlug().getValue() ),
+		"expiries": list( plug.expiriesPlug().getValue() ),
+		"ivsRowMajor": list( plug.ivsRowMajorPlug().getValue() ),
+	}
+
+
+def applySurfacePlugDict( plug: Gaffer.SurfacePlug, d : Mapping[str, Any] ) -> None :
+	if "asOfTime" in d :
+		plug.asOfTimePlug().setValue( str( d["asOfTime"] ) )
+	if "strikes" in d :
+		plug.strikesPlug().setValue( IECore.FloatVectorData( list( d["strikes"] ) ) )
+	if "expiries" in d :
+		plug.expiriesPlug().setValue( IECore.FloatVectorData( list( d["expiries"] ) ) )
+	if "ivsRowMajor" in d :
+		plug.ivsRowMajorPlug().setValue( IECore.FloatVectorData( list( d["ivsRowMajor"] ) ) )
+
+
+def vectorPlugToDict( plug: Gaffer.VectorPlug ) -> Dict[str, Any] :
+	return {
+		"values": list( plug.valuesPlug().getValue() ),
+	}
+
+
+def applyVectorPlugDict( plug: Gaffer.VectorPlug, d : Mapping[str, Any] ) -> None :
+	if "values" in d :
+		plug.valuesPlug().setValue( IECore.FloatVectorData( list( d["values"] ) ) )
+
+
+def matrixPlugToDict( plug: Gaffer.MatrixPlug ) -> Dict[str, Any] :
+	return {
+		"rowTimes": list( plug.rowTimesPlug().getValue() ),
+		"valuesRowMajor": list( plug.valuesRowMajorPlug().getValue() ),
+		"numColumns": plug.numColumnsPlug().getValue(),
+	}
+
+
+def applyMatrixPlugDict( plug: Gaffer.MatrixPlug, d : Mapping[str, Any] ) -> None :
+	if "rowTimes" in d :
+		plug.rowTimesPlug().setValue( IECore.Int64VectorData( list( d["rowTimes"] ) ) )
+	if "valuesRowMajor" in d :
+		plug.valuesRowMajorPlug().setValue( IECore.FloatVectorData( list( d["valuesRowMajor"] ) ) )
+	if "numColumns" in d :
+		plug.numColumnsPlug().setValue( int( d["numColumns"] ) )

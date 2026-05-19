@@ -220,6 +220,7 @@ from .NodeEditor import NodeEditor
 from .Layouts import Layouts
 from .NodeMenu import NodeMenu
 from . import FileMenu
+from . import PceFileMenu
 from . import LayoutMenu
 from . import EditMenu
 from .Frame import Frame

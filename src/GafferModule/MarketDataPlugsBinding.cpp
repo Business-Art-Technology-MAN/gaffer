@@ -13,8 +13,11 @@
 #include "GafferBindings/ValuePlugBinding.h"
 
 #include "Gaffer/MarketContextPlug.h"
+#include "Gaffer/MatrixPlug.h"
 #include "Gaffer/SeriesPlug.h"
 #include "Gaffer/SignalClosurePlug.h"
+#include "Gaffer/SurfacePlug.h"
+#include "Gaffer/VectorPlug.h"
 #include "Gaffer/WeightVectorPlug.h"
 
 #include "fmt/format.h"
@@ -61,6 +64,9 @@ MARKET_PLUG_SERIALISER( SeriesPlug, "SeriesPlug" )
 MARKET_PLUG_SERIALISER( SignalClosurePlug, "SignalClosurePlug" )
 MARKET_PLUG_SERIALISER( WeightVectorPlug, "WeightVectorPlug" )
 MARKET_PLUG_SERIALISER( MarketContextPlug, "MarketContextPlug" )
+MARKET_PLUG_SERIALISER( SurfacePlug, "SurfacePlug" )
+MARKET_PLUG_SERIALISER( VectorPlug, "VectorPlug" )
+MARKET_PLUG_SERIALISER( MatrixPlug, "MatrixPlug" )
 
 #undef MARKET_PLUG_SERIALISER
 
@@ -150,4 +156,51 @@ void GafferModule::bindMarketDataPlugs()
 		.def( "creditSpreadPlug", static_cast<FloatPlug *(MarketContextPlug::*)()>( &MarketContextPlug::creditSpreadPlug ), return_value_policy<reference_existing_object>() )
 	;
 	Serialisation::registerSerialiser( MarketContextPlug::staticTypeId(), new MarketContextPlugSerialiser );
+
+	PlugClass<SurfacePlug>()
+		.def(
+			init<const std::string &, Plug::Direction, unsigned>(
+				(
+					arg( "name" ) = GraphComponent::defaultName<SurfacePlug>(),
+					arg( "direction" ) = Plug::In,
+					arg( "flags" ) = Plug::Default
+				)
+			)
+		)
+		.def( "asOfTimePlug", static_cast<StringPlug *(SurfacePlug::*)()>( &SurfacePlug::asOfTimePlug ), return_value_policy<reference_existing_object>() )
+		.def( "strikesPlug", static_cast<FloatVectorDataPlug *(SurfacePlug::*)()>( &SurfacePlug::strikesPlug ), return_value_policy<reference_existing_object>() )
+		.def( "expiriesPlug", static_cast<FloatVectorDataPlug *(SurfacePlug::*)()>( &SurfacePlug::expiriesPlug ), return_value_policy<reference_existing_object>() )
+		.def( "ivsRowMajorPlug", static_cast<FloatVectorDataPlug *(SurfacePlug::*)()>( &SurfacePlug::ivsRowMajorPlug ), return_value_policy<reference_existing_object>() )
+	;
+	Serialisation::registerSerialiser( SurfacePlug::staticTypeId(), new SurfacePlugSerialiser );
+
+	PlugClass<VectorPlug>()
+		.def(
+			init<const std::string &, Plug::Direction, unsigned>(
+				(
+					arg( "name" ) = GraphComponent::defaultName<VectorPlug>(),
+					arg( "direction" ) = Plug::In,
+					arg( "flags" ) = Plug::Default
+				)
+			)
+		)
+		.def( "valuesPlug", static_cast<FloatVectorDataPlug *(VectorPlug::*)()>( &VectorPlug::valuesPlug ), return_value_policy<reference_existing_object>() )
+	;
+	Serialisation::registerSerialiser( VectorPlug::staticTypeId(), new VectorPlugSerialiser );
+
+	PlugClass<MatrixPlug>()
+		.def(
+			init<const std::string &, Plug::Direction, unsigned>(
+				(
+					arg( "name" ) = GraphComponent::defaultName<MatrixPlug>(),
+					arg( "direction" ) = Plug::In,
+					arg( "flags" ) = Plug::Default
+				)
+			)
+		)
+		.def( "rowTimesPlug", static_cast<Int64VectorDataPlug *(MatrixPlug::*)()>( &MatrixPlug::rowTimesPlug ), return_value_policy<reference_existing_object>() )
+		.def( "valuesRowMajorPlug", static_cast<FloatVectorDataPlug *(MatrixPlug::*)()>( &MatrixPlug::valuesRowMajorPlug ), return_value_policy<reference_existing_object>() )
+		.def( "numColumnsPlug", static_cast<IntPlug *(MatrixPlug::*)()>( &MatrixPlug::numColumnsPlug ), return_value_policy<reference_existing_object>() )
+	;
+	Serialisation::registerSerialiser( MatrixPlug::staticTypeId(), new MatrixPlugSerialiser );
 }

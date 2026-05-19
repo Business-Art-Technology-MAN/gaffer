@@ -15,6 +15,9 @@ __compoundClasses = (
 	Gaffer.SignalClosurePlug,
 	Gaffer.WeightVectorPlug,
 	Gaffer.MarketContextPlug,
+	Gaffer.SurfacePlug,
+	Gaffer.VectorPlug,
+	Gaffer.MatrixPlug,
 )
 
 for _plugType in __compoundClasses :

@@ -70,7 +70,7 @@ unsigned StringPlug::substitutions() const
 
 bool StringPlug::acceptsInput( const Plug *input ) const
 {
-	if( !ValuePlug::acceptsInput( input ) )
+	if( !Plug::acceptsInput( input ) )
 	{
 		return false;
 	}

@@ -62,6 +62,7 @@ from . import ExtensionAlgo
 from .ConstantSeriesNode import ConstantSeriesNode
 from .RollingReturnsNode import RollingReturnsNode
 from .RealizedVolNode import RealizedVolNode
+from .KyleLambdaNode import KyleLambdaNode
 from .SeriesCsvReaderNode import SeriesCsvReaderNode
 from . import MarketDataTimeseries
 from .TimeSeriesStoreNode import TimeSeriesStoreNode
@@ -71,6 +72,9 @@ from . import MarketDataFactors
 from .FactorSeriesNode import FactorSeriesNode
 from . import MarketDataPanel
 from .CrossSectionNode import CrossSectionNode
+from .IVSurfaceNode import IVSurfaceNode
+from .PackMatrixNode import PackMatrixNode
+from .PCALoadingsNode import PCALoadingsNode
 from .FamaFrenchLoadingsNode import FamaFrenchLoadingsNode
 from .ConnectionMatrixNode import ConnectionMatrixNode
 from .PceGraphIO import (

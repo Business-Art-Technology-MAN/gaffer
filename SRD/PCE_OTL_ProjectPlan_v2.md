@@ -12,12 +12,12 @@ Single AI coding agent (Claude Code or equivalent) · Human architect oversight
 
 ## Implementation status (MarketLab / PCE fork)
 
-**Snapshot: 2026-05-16.** Trackers: [`PCE_Phase2a_Progress.md`](PCE_Phase2a_Progress.md) (M1–M3), [`PCE_Phase2_MilestoneTracker.md`](PCE_Phase2_MilestoneTracker.md) (M4–M10).
+**Snapshot: 2026-05-16.** Trackers: [`PCE_Phase2a_Progress.md`](PCE_Phase2a_Progress.md) (M1–M3), [`PCE_Phase2_MilestoneTracker.md`](PCE_Phase2_MilestoneTracker.md) (M4–M10), [`PCE_NextSteps.md`](PCE_NextSteps.md) (post–M10 backlog).
 
 | Phase | Status | Summary |
 | --- | --- | --- |
-| **Phase 1** — OTL plugs | **Done (current scope)** | C++ **`SeriesPlug`** (parallel **`Int64VectorData`** `times` + **`FloatVectorData`** `values`), **`SignalClosurePlug`**, **`WeightVectorPlug`**, **`MarketContextPlug`**; `GafferModule` bindings, serialisers, **`MarketDataMetadata`**, **`MarketDataAlgo`** (JSON dict interchange), **`GafferTest/MarketDataPlugsTest`**. *Plan delta:* not USD per-sample `timeSamples` on one float vector; `MarketContext` is a plug type, not a separate injected struct. |
-| **Phase 2** — Layer 1–2 nodes | **Substantially complete (script/UI)** | **Done:** prior rows + **`PceGraphIO`** (`.pce` **PCE-GRAPH/1** envelope) + **ArcticDB read** on `TimeSeriesStoreNode`. Tracker: [`PCE_FileFormat_And_Backends.md`](PCE_FileFormat_And_Backends.md). **Still deferred:** **`IVSurfaceNode`/`SurfacePlug`**, **`PCALoadingsNode`**, **`KyleLambdaNode`**, full live APIs, dedicated **`VectorPlug`/`MatrixPlug`**, **USD-native** `.pce` (Phase 6). |
+| **Phase 1** — OTL plugs | **Done (current scope)** | C++ **`SeriesPlug`** (parallel **`Int64VectorData`** `times` + **`FloatVectorData`** `values`), **`ScalarPlug`**, **`VectorPlug`**, **`MatrixPlug`**, **`SurfacePlug`**, **`SignalClosurePlug`**, **`WeightVectorPlug`**, **`MarketContextPlug`**; `GafferModule` bindings, serialisers, **`MarketDataMetadata`**, **`MarketDataAlgo`** (JSON dict interchange), **`GafferTest/MarketDataPlugsTest`**. *Plan delta:* not USD per-sample `timeSamples` on one float vector; `MarketContext` is a plug type, not a separate injected struct. |
+| **Phase 2** — Layer 1–2 nodes | **Substantially complete (script/UI)** | **Done:** prior rows + **`PceGraphIO`**: **`.pce` as USD layer** (**`PCE-USD/1`** — USDA on disk, script + JSON metadata in root `customLayerData`, `/PCE` defaultPrim when OpenUSD is available; legacy **`PCE-GRAPH/1`** text envelope via `graphFormat="legacy"`) + **ArcticDB read** on `TimeSeriesStoreNode`. **GUI:** **File → PCE → Save/Open** (`GafferUI/PceFileMenu`). Tracker: [`PCE_FileFormat_And_Backends.md`](PCE_FileFormat_And_Backends.md). **`KyleLambdaNode`** / **`RealizedVolNode`**: **`ScalarPlug`** `out` (**N8**). **`IVSurfaceNode`** + **`SurfacePlug`** (**N6**). **`PackMatrixNode`** + **`PCALoadingsNode`** + PCA in **`MarketMath`** (**N9**); dedicated **`VectorPlug`/`MatrixPlug`** (**N10**). **M8/M9** nodes may still use multi-`SeriesPlug` / raw panel plugs until refactored. **Still open:** broader live APIs than HTTP CSV + FRED. **Phase 6** remains the **portfolio** USD story — see §8. |
 | **Phase 3 onward** | Not started | Regimes through integration per sections below. |
 
 # 1  The Honest Estimate
@@ -104,7 +104,7 @@ Four C++ compound typed plugs (including OTL market context) are the structural 
 
 > Phase 1 exit criterion Core OTL plug types build, serialise cleanly, have Python bindings, and pass unit tests. The type-checking system rejects incorrect connections at the UI layer.
 
-**Implementation (2026-05-16):** Exit criterion met for **`SeriesPlug`**, **`SignalClosurePlug`**, **`WeightVectorPlug`**, and **`MarketContextPlug`** (fourth compound plug added for OTL context). Build + **`GafferTest/MarketDataPlugsTest`** on CI / local install.
+**Implementation (2026-05-16):** Exit criterion met for **`SeriesPlug`**, **`SignalClosurePlug`**, **`WeightVectorPlug`**, and **`MarketContextPlug`** (fourth compound plug added for OTL context). **2026 extensions:** **`SurfacePlug`** (**N6**), **`ScalarPlug`** (**N8**), **`VectorPlug`/`MatrixPlug`** (**N10**). Build + **`GafferTest/MarketDataPlugsTest`** on CI / local install.
 
 # 4  Phase 2 — Layer 1 and 2 Nodes
 
@@ -121,11 +121,11 @@ The first nodes that appear in the PCE node graph. All Layer 1 nodes output Seri
 | --- | --- | --- |
 | TimeSeriesStoreNode (Python) | Gaffer Python node. Wraps ArcticDB (pip install) as the default backend. Parameters: instrument_id, field, lookback, bar_type, adjust. Outputs: SeriesPlug. Point-in-time filter in BacktestContext. | Low |
 | MarketVarNode (Python) | Fetches scalar market variables (VIX, T10Y2Y, credit spread) via MacroStore backend. Output: SeriesPlug. | Low |
-| IVSurfaceNode (Python) | Fetches options IV surface history via SurfaceStore backend. Output: new SurfacePlug type (can be deferred to Phase 2b). | Medium |
+| IVSurfaceNode (Python) | **`SurfacePlug`** output; **memory** registry (`MarketDataSurfaces`) + long-format **CSV** (`strike`,`expiry`,`iv`). Live/history SurfaceStore deferred. | Medium |
 | CrossSectionNode (Python) | Fetches matrix of returns across instrument universe. Output: new MatrixPlug type. Required for Avramov-He connection matrix. | Medium |
 | FactorSeriesNode (Python) | Fetches Fama-French / AQR factor return series from FactorStore. Backed by Ken French data library download or local Parquet. | Low |
 
-**As of 2026-05-16:** **`ConstantSeriesNode`** (synthetic `SeriesPlug`) and **`SeriesCsvReaderNode`** (CSV → `SeriesPlug`; Windows path handling uses **`NoSubstitutions`** on path plugs) are implemented in addition to the stub **`TimeSeriesStoreNode`** above. **`MarketVarNode`** (macro registry / CSV / Parquet) and **`FactorSeriesNode`** (factor registry / CSV / Parquet) extend Layer 1; **`CrossSectionNode`** outputs a numeric panel via **`rowTimes`**, **`valuesRowMajor`**, **`numColumns`**.
+**As of 2026-05-16:** **`ConstantSeriesNode`** (synthetic `SeriesPlug`) and **`SeriesCsvReaderNode`** (CSV → `SeriesPlug`; Windows path handling uses **`NoSubstitutions`** on path plugs) are implemented in addition to the stub **`TimeSeriesStoreNode`** above. **`MarketVarNode`** (macro registry / CSV / Parquet) and **`FactorSeriesNode`** (factor registry / CSV / Parquet) extend Layer 1; **`CrossSectionNode`** outputs a numeric panel via **`rowTimes`**, **`valuesRowMajor`**, **`numColumns`**; **`IVSurfaceNode`** outputs an options IV grid via **`SurfacePlug`** (memory + CSV).
 
 ### Layer 2 — Factor Shader Nodes
 
@@ -134,13 +134,13 @@ The first nodes that appear in the PCE node graph. All Layer 1 nodes output Seri
 | RollingReturnsNode (Python) | Log returns from SeriesPlug price input. Window parameter. Output: SeriesPlug. | Low |
 | RealizedVolNode (Python) | Annualised stddev from returns SeriesPlug. Window parameter. Output: float (scalar via ScalarPlug). | Low |
 | FamaFrenchLoadingsNode (Python) | Rolling OLS via statsmodels. Inputs: asset_returns, mkt_ret, smb_ret, hml_ret SeriesPlugs. Output: VectorPlug [beta_mkt, beta_smb, beta_hml]. | Low |
-| PCALoadingsNode (Python) | Rolling PCA via scikit-learn. Input: MatrixPlug. Outputs: VectorPlug loadings + SeriesPlug factor_ret. | Low |
-| KyleLambdaNode (Python) | Rolling Kyle lambda from returns + dollar volume SeriesPlugs. Output: ScalarPlug float. | Low |
+| PCALoadingsNode (Python) | Rolling PCA (power iteration + deflation in **`MarketMath`**, no sklearn). Input: **`MatrixPlug`**. Outputs: **`VectorPlug`** loadings / variance explained + **`SeriesPlug`** `pc1Scores`. | Low |
+| KyleLambdaNode (Python) | Rolling Kyle λ **proxy** from returns + dollar volume `SeriesPlug`s. Output: **`ScalarPlug`**. | Low |
 | ConnectionMatrixNode (Python) | Avramov-He cross-asset OLS. Input: MatrixPlug universe_returns. Output: MatrixPlug lambda_mat. Most compute-intensive Layer 2 node. | Medium |
 
 > Phase 2 exit criterion A complete Layer 1→2 pipeline builds in the node graph: a TimeSeriesStoreNode fetching AAPL close prices flows through RollingReturnsNode and RealizedVolNode. Results visible in the Python console. All nodes serialise and restore from a .pce file.
 
-**Implementation (2026-05-16, updated):** Partially met for **script serialisation** (`ScriptNode.serialise` / `execute`) on the nodes above; **`.pce` / USD stage** persistence not wired (M10 file format). **TimeSeriesStoreNode** is a **stub** (memory + Parquet, not live ArcticDB). **`SeriesCsvReaderNode`** covers file-based Layer 1 data for dev **until** store/backends are complete. **Layer 1–2 extensions:** **`MarketVarNode`** / **`FactorSeriesNode`** / **`CrossSectionNode`**; rolling FF **three-`SeriesPlug`** betas + **`ConnectionMatrixNode`** on row-major panels (no dedicated **MatrixPlug** type yet).
+**Implementation (2026-05-16, updated):** **M10** met for **`.pce`** persistence: **`PceGraphIO`** round-trips **`ScriptNode.serialise()`** / **`execute`** with **`PCE-USD/1`** (default when `pxr` is available) or legacy **`PCE-GRAPH/1`**, with unit tests in **`GafferTest/PceGraphIOTest`**. **MarketLab UI:** **File → PCE → Save Graph As / Open Graph** (`GafferUI/PceFileMenu`). **Exit story test:** **`GafferTest/Phase2ExitCriterionTest`** (CSV → **`RollingReturnsNode`** → **`RealizedVolNode`** + `.pce` round-trip). **TimeSeriesStoreNode** remains a **stub** for live feeds: **memory + Parquet + optional ArcticDB read** (v1); not full Arctic write/catalog semantics. **`SeriesCsvReaderNode`** covers file-based Layer 1 data for dev **until** store/backends are complete. **Layer 1–2 extensions:** **`MarketVarNode`** / **`FactorSeriesNode`** / **`CrossSectionNode`**; rolling FF **three-`SeriesPlug`** betas + **`ConnectionMatrixNode`** on row-major panels (no dedicated **MatrixPlug** type yet).
 
 # 5  Phase 3 — Layer 3 Regime Shader Nodes
 
@@ -211,12 +211,12 @@ The compositor layer. One aggregator node per portfolio stage. Consumes all Laye
 **Phase 6 — Portfolio Prim Hierarchy via usd-core** · *5–8 days*
 
 
-Gaffer already has USD import/export support. Phase 6 extends this to make USD the native storage format for the portfolio stage — not just an export target. The .pce file format is a USD stage.
+Gaffer already has USD import/export support. **Phase 2 (M10)** already stores the **node graph** inside a real USD **layer** as **`.pce`** (**`PCE-USD/1`**: embedded Gaffer script + metadata in root **`customLayerData`**, placeholder **`/PCE`** prim). **Phase 6** extends that into the **full portfolio stage**: typed **PCE instrument prims**, hierarchy under **`/Portfolio/...`**, **composition layers** for risk overrides, and **timeline / TimeCode** behaviour — i.e. USD-native *portfolio* semantics, not only the graph payload.
 
 | Task | AI Agent Action | Complexity |
 | --- | --- | --- |
 | PCE schema definition | Define PCE USD schemas: EquityAsset, BondAsset, FuturesAsset, OptionsAsset, FXForward prims. Each has typed attributes matching OTL InstrumentContext fields. usdGenSchema. | Medium |
-| PCE Stage serialisation | .pce file = USD stage. The shader network serialises to USD layer attributes on the root prim. Node graph layout serialises to USD custom metadata. Round-trip tested. | High |
+| PCE Stage serialisation | Extend **`.pce`** beyond **M10** (`customLayerData` script blob): shader/network and layout as first-class USD attributes/metadata on root **and** instrument prims; **layer stacks** for overrides. Round-trip tested. | High |
 | Portfolio prim hierarchy | /Portfolio/Equities/ES1!, /Portfolio/Rates/ZN1!, /Portfolio/FX/EURUSD — typed PCE prims. Visible in Gaffer's SceneHierarchy panel (repurposed as PCE hierarchy panel). | Medium |
 | Layer-based overrides | Risk manager can apply a USD layer override on top of a quant's base strategy layer — non-destructively adjusting max_gross_exposure without touching the base .pce file. | High |
 | TimeCode mapping | USD TimeCode maps to market time (nanosecond epoch). PCE stage evaluates at ctx.t — scrubbing the timeline evaluates the shader network at different market timestamps. | High |

@@ -72,7 +72,7 @@ GAFFER_PLUG_DEFINE_TEMPLATE_TYPE( Gaffer::PathMatcherDataPlug, PathMatcherDataPl
 template<>
 bool CompoundObjectPlug::acceptsInput( const Plug *input ) const
 {
-	if( !ValuePlug::acceptsInput( input ) )
+	if( !Plug::acceptsInput( input ) )
 	{
 		return false;
 	}
@@ -112,7 +112,7 @@ void CompoundObjectPlug::setFrom( const ValuePlug *other )
 template<>
 bool StringVectorDataPlug::acceptsInput( const Plug *input ) const
 {
-	if( !ValuePlug::acceptsInput( input ) )
+	if( !Plug::acceptsInput( input ) )
 	{
 		return false;
 	}

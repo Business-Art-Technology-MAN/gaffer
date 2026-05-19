@@ -128,6 +128,8 @@ prependToPath( pathlib.Path.home() / "gaffer" / "startup", "GAFFER_STARTUP_PATHS
 appendToPath( gafferRoot / "startup", "GAFFER_STARTUP_PATHS" )
 prependToPath( gafferRoot / "graphics", "GAFFERUI_IMAGE_PATHS" )
 prependToPath( gafferRoot / "python", "PYTHONPATH" )
+# Optional user/site packages: `scripts/gaffer-pip*` installs into ~/gaffer/python_packages
+appendToPath( pathlib.Path.home() / "gaffer" / "python_packages", "PYTHONPATH" )
 prependToPath( gafferRoot / "lib", libraryPath )
 prependToPath( gafferRoot / "bin", "PATH" )
 

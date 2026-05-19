@@ -59,6 +59,7 @@ scriptWindowMenu = GafferUI.ScriptWindow.menuDefinition( application )
 
 GafferUI.ApplicationMenu.appendDefinitions( scriptWindowMenu, prefix="/MarketLab" )
 GafferUI.FileMenu.appendDefinitions( scriptWindowMenu, prefix="/File" )
+GafferUI.PceFileMenu.appendDefinitions( scriptWindowMenu, prefix="/File/PCE" )
 GafferUI.EditMenu.appendDefinitions( scriptWindowMenu, prefix="/Edit" )
 GafferUI.LayoutMenu.appendDefinitions( scriptWindowMenu, name="/Layout" )
 GafferUI.GraphBookmarksUI.appendScriptWindowMenuDefinitions( scriptWindowMenu, prefix="/Edit" )

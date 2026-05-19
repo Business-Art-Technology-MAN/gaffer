@@ -159,10 +159,12 @@ from .TweakPlugTest import TweakPlugTest
 from .HiddenFilePathFilterTest import HiddenFilePathFilterTest
 from .ContextVariableTweaksTest import ContextVariableTweaksTest
 from .OptionalValuePlugTest import OptionalValuePlugTest
-from .MarketDataPlugsTest import MarketDataPlugsTest
+from .MarketDataPlugsTest import MarketDataPlugsTest, PCALoadingsNodeTest
 from .ConstantSeriesNodeTest import ConstantSeriesNodeTest
 from .RollingReturnsNodeTest import RollingReturnsNodeTest
 from .RealizedVolNodeTest import RealizedVolNodeTest
+from .KyleLambdaNodeTest import KyleLambdaNodeTest
+from .IVSurfaceNodeTest import IVSurfaceNodeTest
 from .SeriesCsvReaderNodeTest import SeriesCsvReaderNodeTest
 from .TimeSeriesStoreNodeTest import TimeSeriesStoreNodeTest
 from .MarketPhase2ExtendedTest import (
@@ -170,9 +172,11 @@ from .MarketPhase2ExtendedTest import (
 	CrossSectionNodeTest,
 	FactorSeriesNodeTest,
 	FamaFrenchLoadingsNodeTest,
+	MarketDataN5Test,
 	MarketVarNodeTest,
 	Phase2PipelineScriptTest,
 )
+from .Phase2ExitCriterionTest import Phase2ExitCriterionTest
 from .PceGraphIOTest import PceGraphIOTest
 from .ThreadMonitorTest import ThreadMonitorTest
 from .CollectTest import CollectTest

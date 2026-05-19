@@ -850,7 +850,10 @@ bool ValuePlug::acceptsInput( const Plug *input ) const
 	}
 	if( input )
 	{
-		return input->isInstanceOf( staticTypeId() );
+		// Must be dynamic ``typeId()``: an unqualified ``staticTypeId()`` here would resolve to
+		// ``ValuePlug::staticTypeId()`` and incorrectly allow any ``ValuePlug`` subclass (e.g.
+		// ``MatrixPlug`` → ``SeriesPlug`` via compatible child plugs).
+		return input->isInstanceOf( typeId() );
 	}
 	return true;
 }

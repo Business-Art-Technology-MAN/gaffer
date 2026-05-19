@@ -56,7 +56,7 @@ GAFFER_PLUG_DEFINE_TEMPLATE_TYPE( Gaffer::AtomicBox2iPlug, AtomicBox2iPlugTypeId
 template<>
 bool BoolPlug::acceptsInput( const Plug *input ) const
 {
-	if( !ValuePlug::acceptsInput( input ) )
+	if( !Plug::acceptsInput( input ) )
 	{
 		return false;
 	}

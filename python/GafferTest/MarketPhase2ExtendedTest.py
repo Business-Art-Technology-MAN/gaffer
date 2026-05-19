@@ -6,8 +6,11 @@
 
 import math
 import os
+import shutil
 import tempfile
+import threading
 import unittest
+from http.server import HTTPServer, SimpleHTTPRequestHandler
 
 import IECore
 
@@ -45,6 +48,60 @@ class MarketVarNodeTest( GafferTest.TestCase ) :
 		with self.assertRaisesRegex( Gaffer.ProcessException, r"unknown backend.*nope" ) :
 			n["out"]["times"].getValue()
 
+	def testHttpCsv( self ) :
+
+		d = tempfile.mkdtemp( prefix = "gaffer_httpcsv_" )
+		try :
+			with open( os.path.join( d, "series.csv" ), "w", encoding = "utf-8" ) as f :
+				f.write( "t,close\n100,1.0\n200,2.0\n" )
+
+			server = HTTPServer(
+				( "127.0.0.1", 0 ),
+				lambda rq, ca, sv, root = d: SimpleHTTPRequestHandler( rq, ca, sv, directory = root ),
+			)
+			thread = threading.Thread( target = server.serve_forever, daemon = True )
+			thread.start()
+			try :
+				port = server.server_address[1]
+				url = f"http://127.0.0.1:{port}/series.csv"
+
+				n = Gaffer.MarketVarNode()
+				n["backend"].setValue( "httpcsv" )
+				n["resourcePath"].setValue( url )
+				n["hasHeader"].setValue( True )
+				n["timeColumn"].setValue( 0 )
+				n["valueColumn"].setValue( 1 )
+
+				self.assertEqual( n["out"]["times"].getValue(), IECore.Int64VectorData( [ 100, 200 ] ) )
+				self.assertEqual(
+					[ round( n["out"]["values"].getValue()[i], 5 ) for i in range( 2 ) ],
+					[ 1.0, 2.0 ],
+				)
+			finally :
+				server.shutdown()
+				server.server_close()
+		finally :
+			# rmtree after server stopped so file not locked on Windows
+			shutil.rmtree( d, ignore_errors = True )
+
+	def testHttpCsvRejectsNonHttpScheme( self ) :
+
+		n = Gaffer.MarketVarNode()
+		n["backend"].setValue( "httpcsv" )
+		n["resourcePath"].setValue( r"C:\temp\file.csv" )
+		with self.assertRaisesRegex( Gaffer.ProcessException, r"http\(s\) URL" ) :
+			n["out"]["times"].getValue()
+
+	@unittest.skipUnless( Gaffer.MarketDataIO.fred_api_key_from_environ(), "PCE_FRED_API_KEY / FRED_API_KEY not set" )
+	def testFredVixclsSmoke( self ) :
+
+		n = Gaffer.MarketVarNode()
+		n["backend"].setValue( "fred" )
+		n["variableName"].setValue( "VIXCLS" )
+		n["lookback"].setValue( 5 )
+		t = n["out"]["times"].getValue()
+		self.assertGreater( len( t ), 0 )
+
 
 class FactorSeriesNodeTest( GafferTest.TestCase ) :
 
@@ -62,6 +119,37 @@ class FactorSeriesNodeTest( GafferTest.TestCase ) :
 		n = Gaffer.FactorSeriesNode()
 		n["factorId"].setValue( "MKT_RF" )
 		self.assertEqual( n["out"]["times"].getValue(), IECore.Int64VectorData( [ 5, 6 ] ) )
+
+	def testHttpCsv( self ) :
+
+		d = tempfile.mkdtemp( prefix = "gaffer_httpcsv_fac_" )
+		try :
+			with open( os.path.join( d, "fac.csv" ), "w", encoding = "utf-8" ) as f :
+				f.write( "date,r\n300,0.1\n400,0.2\n" )
+
+			server = HTTPServer(
+				( "127.0.0.1", 0 ),
+				lambda rq, ca, sv, root = d: SimpleHTTPRequestHandler( rq, ca, sv, directory = root ),
+			)
+			thread = threading.Thread( target = server.serve_forever, daemon = True )
+			thread.start()
+			try :
+				port = server.server_address[1]
+				url = f"http://127.0.0.1:{port}/fac.csv"
+
+				n = Gaffer.FactorSeriesNode()
+				n["backend"].setValue( "httpcsv" )
+				n["resourcePath"].setValue( url )
+				n["hasHeader"].setValue( True )
+				n["timeColumn"].setValue( 0 )
+				n["valueColumn"].setValue( 1 )
+
+				self.assertEqual( n["out"]["times"].getValue(), IECore.Int64VectorData( [ 300, 400 ] ) )
+			finally :
+				server.shutdown()
+				server.server_close()
+		finally :
+			shutil.rmtree( d, ignore_errors = True )
 
 
 class CrossSectionNodeTest( GafferTest.TestCase ) :
@@ -108,6 +196,15 @@ class CrossSectionNodeTest( GafferTest.TestCase ) :
 			self.assertEqual( n["rowTimes"].getValue(), IECore.Int64VectorData( [ 0, 10 ] ) )
 		finally :
 			os.remove( path )
+
+
+class MarketDataN5Test( GafferTest.TestCase ) :
+
+	def testFred_observations_require_key( self ) :
+
+		with self.assertRaises( RuntimeError ) as cm :
+			Gaffer.MarketDataIO.read_series_fred_observations( "VIXCLS", apiKey = "" )
+		self.assertIn( "FRED", str( cm.exception ) )
 
 
 class FamaFrenchLoadingsNodeTest( GafferTest.TestCase ) :

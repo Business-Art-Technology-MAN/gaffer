@@ -45,7 +45,8 @@ from . import MarketDataIO
 from . import MarketDataTimeseries
 
 
-## Layer 1 factor returns → :class:`Gaffer.SeriesPlug` (**memory**, **CSV**, **Parquet**).
+## Layer 1 factor returns → :class:`Gaffer.SeriesPlug` (**memory**, **CSV**, **Parquet**,
+# **httpcsv**, **fred** — FRED series id in ``factorId``, key from env).
 class FactorSeriesNode( Gaffer.ComputeNode ) :
 
 	def __init__( self, name = "FactorSeries" ) :
@@ -150,8 +151,20 @@ class FactorSeriesNode( Gaffer.ComputeNode ) :
 			valueCol = self["parquetValueColumn"].getValue() or "value"
 			return MarketDataIO.read_parquet_two_column_series( path, valueCol )
 
+		if backend == "httpcsv" :
+			return MarketDataIO.read_series_http_csv(
+				self["resourcePath"].getValue(),
+				self["hasHeader"].getValue(),
+				self["timeColumn"].getValue(),
+				self["valueColumn"].getValue(),
+				self["delimiter"].getValue(),
+			)
+
+		if backend == "fred" :
+			return MarketDataIO.read_series_fred_observations( self["factorId"].getValue() )
+
 		raise ValueError(
-			f'FactorSeriesNode: unknown backend "{self["backend"].getValue()}" (expected memory, csv, or parquet).'
+			f'FactorSeriesNode: unknown backend "{self["backend"].getValue()}" (expected memory, csv, parquet, httpcsv, or fred).'
 		)
 
 	def compute( self, plug, context ) :
