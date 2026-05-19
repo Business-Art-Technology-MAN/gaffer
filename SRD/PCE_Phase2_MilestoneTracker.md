@@ -3,7 +3,8 @@
 **Parent:** [PCE_OTL_ProjectPlan_v2.md](PCE_OTL_ProjectPlan_v2.md) (§ Phase 2).  
 **Early slice (done):** [PCE_Phase2a_Progress.md](PCE_Phase2a_Progress.md) — M1–M3 synthetic + transforms + realized vol.  
 **`.pce` envelope & ArcticDB:** [PCE_FileFormat_And_Backends.md](PCE_FileFormat_And_Backends.md).  
-**Post–M10 next steps (A2, tests, Arctic depth, 2b):** [PCE_NextSteps.md](PCE_NextSteps.md).
+**Post–M10 next steps (A2, tests, Arctic depth, 2b):** [PCE_NextSteps.md](PCE_NextSteps.md).  
+**Phase 3 (Layer 3 regimes):** [PCE_Phase3_MilestoneTracker.md](PCE_Phase3_MilestoneTracker.md) · branch `marketlab/phase3`.
 
 This document is the **working backlog** for the rest of Phase 2: Layer 1 data nodes, Layer 2 factor nodes, shared types, and exit criteria. Update status and log as work lands.
 

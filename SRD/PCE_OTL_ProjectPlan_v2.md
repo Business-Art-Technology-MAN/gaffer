@@ -12,13 +12,14 @@ Single AI coding agent (Claude Code or equivalent) · Human architect oversight
 
 ## Implementation status (MarketLab / PCE fork)
 
-**Snapshot: 2026-05-16.** Trackers: [`PCE_Phase2a_Progress.md`](PCE_Phase2a_Progress.md) (M1–M3), [`PCE_Phase2_MilestoneTracker.md`](PCE_Phase2_MilestoneTracker.md) (M4–M10), [`PCE_NextSteps.md`](PCE_NextSteps.md) (post–M10 backlog).
+**Snapshot: 2026-05-18.** Trackers: [`PCE_Phase2a_Progress.md`](PCE_Phase2a_Progress.md) (M1–M3), [`PCE_Phase2_MilestoneTracker.md`](PCE_Phase2_MilestoneTracker.md) (M4–M10), [`PCE_Phase3_MilestoneTracker.md`](PCE_Phase3_MilestoneTracker.md) (Layer 3 regimes), [`PCE_NextSteps.md`](PCE_NextSteps.md) (cross-phase backlog).
 
 | Phase | Status | Summary |
 | --- | --- | --- |
 | **Phase 1** — OTL plugs | **Done (current scope)** | C++ **`SeriesPlug`** (parallel **`Int64VectorData`** `times` + **`FloatVectorData`** `values`), **`ScalarPlug`**, **`VectorPlug`**, **`MatrixPlug`**, **`SurfacePlug`**, **`SignalClosurePlug`**, **`WeightVectorPlug`**, **`MarketContextPlug`**; `GafferModule` bindings, serialisers, **`MarketDataMetadata`**, **`MarketDataAlgo`** (JSON dict interchange), **`GafferTest/MarketDataPlugsTest`**. *Plan delta:* not USD per-sample `timeSamples` on one float vector; `MarketContext` is a plug type, not a separate injected struct. |
 | **Phase 2** — Layer 1–2 nodes | **Substantially complete (script/UI)** | **Done:** prior rows + **`PceGraphIO`**: **`.pce` as USD layer** (**`PCE-USD/1`** — USDA on disk, script + JSON metadata in root `customLayerData`, `/PCE` defaultPrim when OpenUSD is available; legacy **`PCE-GRAPH/1`** text envelope via `graphFormat="legacy"`) + **ArcticDB read** on `TimeSeriesStoreNode`. **GUI:** **File → PCE → Save/Open** (`GafferUI/PceFileMenu`). Tracker: [`PCE_FileFormat_And_Backends.md`](PCE_FileFormat_And_Backends.md). **`KyleLambdaNode`** / **`RealizedVolNode`**: **`ScalarPlug`** `out` (**N8**). **`IVSurfaceNode`** + **`SurfacePlug`** (**N6**). **`PackMatrixNode`** + **`PCALoadingsNode`** + PCA in **`MarketMath`** (**N9**); dedicated **`VectorPlug`/`MatrixPlug`** (**N10**). **M8/M9** nodes may still use multi-`SeriesPlug` / raw panel plugs until refactored. **Still open:** broader live APIs than HTTP CSV + FRED. **Phase 6** remains the **portfolio** USD story — see §8. |
-| **Phase 3 onward** | Not started | Regimes through integration per sections below. |
+| **Phase 3** — Layer 3 regime nodes | **In progress** (`marketlab/phase3`) | **`RegimePlug`**, **`ThresholdRegimeNode`**, **`VolRegimeNode`**, optional **CP/HMM** — see §5 and [`PCE_Phase3_MilestoneTracker.md`](PCE_Phase3_MilestoneTracker.md). |
+| **Phase 4 onward** | Not started | Signal shaders + OTL runtime (§6) through integration. |
 
 # 1  The Honest Estimate
 
@@ -146,6 +147,7 @@ The first nodes that appear in the PCE node graph. All Layer 1 nodes output Seri
 
 **Phase 3 — Regime Classification Nodes** · *3–5 days*
 
+**Milestone tracker:** [`PCE_Phase3_MilestoneTracker.md`](PCE_Phase3_MilestoneTracker.md) · **branch:** `marketlab/phase3`.
 
 Regime nodes consume Layer 1–2 outputs and produce a regime enum output. One regime node per portfolio — they are the global lighting layer. Three reference implementations; additional regimes are user-authored OTL shaders in Phase 4.
 
