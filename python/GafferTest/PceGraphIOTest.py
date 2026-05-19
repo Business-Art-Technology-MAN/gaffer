@@ -41,6 +41,23 @@ class PceGraphIOTest( GafferTest.TestCase ) :
 		finally :
 			os.remove( path )
 
+	@unittest.skipUnless( Gaffer.usdAvailableForPce(), "PCE-USD/1 needs pxr" )
+	def testUsdV1FormatWhenGraphOnly( self ) :
+
+		script = Gaffer.ScriptNode()
+		script["n"] = Gaffer.ConstantSeriesNode()
+
+		fd, path = tempfile.mkstemp( suffix = ".pce" )
+		os.close( fd )
+		try :
+			Gaffer.savePceGraphFile( script, path, {}, graphFormat = "usd" )
+			with open( path, "r", encoding = "utf-8" ) as f :
+				text = f.read()
+			self.assertIn( "PCE-USD/1", text )
+			self.assertNotIn( "PCE-USD/2", text )
+		finally :
+			os.remove( path )
+
 	def testLegacyEnvelopeRoundTrip( self ) :
 
 		script = Gaffer.ScriptNode()

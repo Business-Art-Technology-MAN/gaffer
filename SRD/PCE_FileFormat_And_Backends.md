@@ -100,6 +100,7 @@ Names are passed to `unittest.TestLoader.loadTestsFromName` — use **full dotte
 | Phase 2 exit story (one method) | `MarketLab.cmd test GafferTest.Phase2ExitCriterionTest.testCsvToRollingReturnsToRealizedVolAndPceRoundTrip` |
 | N5 HTTP / FRED backends | `MarketLab.cmd test GafferTest.MarketPhase2ExtendedTest` |
 | Phase 5 portfolio / plugs | `MarketLab.cmd test GafferTest.Phase5Test GafferTest.MarketDataPlugsTest` |
+| Phase 6 PCE-USD/2 stage | `MarketLab.cmd test GafferTest.Phase6Test GafferTest.PceGraphIOTest` |
 
 **`AttributeError: type object 'SomeTest' has no attribute 'SomeTest'`** on a **four-part** name like ``GafferTest.FooTest.FooTest.test_bar`` almost always means **`FooTest` was already resolved to the class** (see ``GafferTest/__init__.py`` re-exports). Use **three** segments: ``GafferTest.FooTest.test_bar``. If **import** of the module actually failed, you get a different error — re-sync/rebuild so ``python/GafferTest/FooTest.py`` is in the install.
 

@@ -3,7 +3,7 @@
 **Parent:** [PCE_OTL_ProjectPlan_v2.md](PCE_OTL_ProjectPlan_v2.md) §7 *Phase 5 — Layer 5 Portfolio Aggregator*.  
 **Active branch:** `marketlab/phase5`.  
 **Depends on:** Phase 1 **`SignalClosurePlug`**, **`WeightVectorPlug`**; Phase 4 Layer 4 signal nodes / OTL path.  
-**Precedes:** Phase 6 PCE USD portfolio stage ([§8](PCE_OTL_ProjectPlan_v2.md)).
+**Precedes:** [PCE_Phase6_MilestoneTracker.md](PCE_Phase6_MilestoneTracker.md) (Layer 6 USD stage) — plan [§8](PCE_OTL_ProjectPlan_v2.md).
 
 Working backlog for **Layer 5**: typed multi-instrument signal input, aggregation into **`WeightVectorPlug`**, constraint messaging, optional optimizer backends, and **WeightVector** UI.
 
