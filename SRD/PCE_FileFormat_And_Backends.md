@@ -18,6 +18,8 @@
 
 **App entry:** Launch the graph UI with **`MarketLab.cmd`** (Windows, repo `bin/`) or **`marketlab`** (Unix). **`.pce` save/load** lives under **File → PCE** (not the main **File → Save**, which remains **`.gfr`**).
 
+**Install / repo sync:** Edits under `python/Gaffer/` or `python/GafferTest/` are not picked up by **`MarketLab.cmd test …`** until those trees are **copied or rebuilt** into the install prefix the launcher uses. If a new test module or method “does not exist”, re-sync before debugging the test itself.
+
 **Design (legacy — A0):**
 
 - Line 1: format id `PCE-GRAPH/1`.

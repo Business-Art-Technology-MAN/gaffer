@@ -57,17 +57,17 @@ Wire a **panel** into a **`MatrixPlug`**, then PCA:
 
 **Phase 6** = **portfolio** USD: PCE schemas, **`/Portfolio/...`** hierarchy, composition overrides, timeline — see [PCE_OTL_ProjectPlan_v2.md](PCE_OTL_ProjectPlan_v2.md) §8.
 
-Track Phase 6 work in **`PCE_Phase6_MilestoneTracker.md`** (N12); **§A (N1–N3)** and **§B–§C (N4–N12)** are complete — **Phase 3** regime milestones are complete (`PCE_Phase3_MilestoneTracker.md`); Layer 5 portfolio is **`PCE_Phase5_MilestoneTracker.md`** (N11); **PCE-USD/2** stage v0.1 is N12; next focus **Phase 4** backlog, optional refactors, or **Phase 7** §9 chart plugin.
+Track Phase 6 work in **`PCE_Phase6_MilestoneTracker.md`** (N12); **§A (N1–N3)** and **§B–§C (N4–N12)** are complete — **Phase 3** regime milestones are complete (`PCE_Phase3_MilestoneTracker.md`); Layer 5 portfolio is **`PCE_Phase5_MilestoneTracker.md`** (N11); **PCE-USD/2** stage v0.1 is N12. **Primary path:** **Phase 7** §9 chart plugin plus ongoing **Phase 5–6 regression**; **Phase 4** OTL / signal work continues incrementally on `marketlab/phase4` (not the only gate).
 
 ---
 
 ## Immediate next
 
-1. **Phase 4 (branch `marketlab/phase4`):** Follow [`PCE_Phase4_MilestoneTracker.md`](PCE_Phase4_MilestoneTracker.md) — Track A signal nodes (**`SDFWeightNode`**, **`OptionsSdfNode`**, **`ESFuturesSignalNode`**, **`HJBoundValidator`**) and Track B OTL runtime (**grammar → parser → `OTLShaderNode` → stdlib → shading system**) per plan §6 exit criterion.
+1. **Phase 7:** [`PCE_OTL_ProjectPlan_v2.md`](PCE_OTL_ProjectPlan_v2.md) §9 — **GafferPCEChart** Stage 1 (matplotlib); timeline context (**`PCE_CONTEXT_MARKET_TIME_NS`**) is already wired for scrubbing.
 2. **Phase 5–6 verification:** Run ``MarketLab.cmd test GafferTest.Phase5Test GafferTest.MarketDataPlugsTest`` (N11) and ``MarketLab.cmd test GafferTest.Phase6Test GafferTest.PceGraphIOTest`` (N12, needs **pxr**).
-3. **Phase 7:** [`PCE_OTL_ProjectPlan_v2.md`](PCE_OTL_ProjectPlan_v2.md) §9 — **GafferPCEChart** Stage 1 (matplotlib).
+3. **Phase 4 (branch `marketlab/phase4`):** Follow [`PCE_Phase4_MilestoneTracker.md`](PCE_Phase4_MilestoneTracker.md) — Track A signal nodes and Track B OTL runtime per plan §6; ship in slices alongside Phase 7.
 4. **Optional refactor:** Rewire **M8/M9** nodes (**`FamaFrenchLoadingsNode`**, **`CrossSectionNode`**, etc.) to prefer **`VectorPlug`/`MatrixPlug`** where it simplifies scripts.
-5. **Backlog:** Arctic **on-graph** publish nodes (beyond **`ArcticBackend`** helpers), richer **live vendors** than HTTP CSV + FRED, **usdGenSchema** upgrades for Phase 6.
+5. **Backlog / polish stream:** [`PCE_Polish_Backlog_Tracker.md`](PCE_Polish_Backlog_Tracker.md); Arctic **on-graph** publish nodes, richer **live vendors** than HTTP CSV + FRED, **usdGenSchema** upgrades for Phase 6.
 
 ---
 
@@ -90,3 +90,4 @@ Track Phase 6 work in **`PCE_Phase6_MilestoneTracker.md`** (N12); **§A (N1–N3
 | 2026-05-18 | **Reference graph:** § rolling PCA (`PackMatrixNode` → `PCALoadingsNode`); § immediate next (merge/CI, optional M8/M9 refactor, backlog); § tech debt note on `ValuePlug::acceptsInput`. |
 | 2026-05-18 | **Phase 3:** [`PCE_Phase3_MilestoneTracker.md`](PCE_Phase3_MilestoneTracker.md) + `marketlab/phase3`; OTL status table + §5 tracker link; immediate next points at P3 milestones. |
 | 2026-05-18 | **Phase 4:** [`PCE_Phase4_MilestoneTracker.md`](PCE_Phase4_MilestoneTracker.md); §6 plan link + **Immediate next** → P4; parent docs + Phase D blurb. |
+| 2026-05-18 | **Polish stream:** [`PCE_Polish_Backlog_Tracker.md`](PCE_Polish_Backlog_Tracker.md); **Immediate next** reordered (Phase 7 primary, P5–6 verify, P4 incremental). |

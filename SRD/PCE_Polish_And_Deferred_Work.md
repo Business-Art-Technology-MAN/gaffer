@@ -4,6 +4,8 @@
 
 **Parent:** [PCE_OTL_ProjectPlan_v2.md](PCE_OTL_ProjectPlan_v2.md) · [PCE_NextSteps.md](PCE_NextSteps.md) · phase trackers ([Phase 5](PCE_Phase5_MilestoneTracker.md), [Phase 6](PCE_Phase6_MilestoneTracker.md), [Phase 4](PCE_Phase4_MilestoneTracker.md)).
 
+**Active tracker (PB-M\* milestones):** [PCE_Polish_Backlog_Tracker.md](PCE_Polish_Backlog_Tracker.md).
+
 **Update:** Append rows to the change log when items ship or are re-scoped; keep bullets honest.
 
 ---
@@ -27,7 +29,7 @@ Items that **work today** but deserve tighter UX, consistency, or docs.
 
 ### 2.1 File / graph / stage IO
 
-- **File → PCE → Save/Open:** Still saves the **node graph** only (`graphFormat=usd|legacy`). **Portfolio stage** (**`PCE-USD/2`**) is available via **`Gaffer.savePceGraphFile(..., portfolio=..., sublayerPaths=...)`** in Python; wiring **optional portfolio payload** from UI, script variables, or a dedicated dialog is polish.
+- **File → PCE → Save/Open:** Saves the **node graph** (`graphFormat=usd|legacy`). When OpenUSD is available, **Save Graph As (PCE-USD/2 portfolio shell)…** also writes an empty **`PcePortfolioStagePayload`** so **`/Portfolio`** exists. **Portfolio stage** payloads from script variables or a dedicated dialog remain polish (see [PCE_Polish_Backlog_Tracker.md](PCE_Polish_Backlog_Tracker.md)).
 - **Install vs repo:** Python modules (e.g. **`GafferTest`**) must be **copied or rebuilt** into the install prefix after edits; document in onboarding if teams hit stale-test confusion.
 - **USDA assertions in tests:** On-disk text uses **`def Xform "Portfolio"`** etc., not always a literal **`/Portfolio`** substring; tests should stay aligned with **USD export** spelling.
 
@@ -112,3 +114,4 @@ From [PCE_OTL_ProjectPlan_v2.md](PCE_OTL_ProjectPlan_v2.md) implementation table
 | Date | Change |
 | --- | --- |
 | 2026-05-18 | Initial backlog: human gates, polish (IO UI, L5/L6/OTL/data), deferred USD/OTL/Phase 7–9, plan deltas, verify commands. |
+| 2026-05-18 | Linked [PCE_Polish_Backlog_Tracker.md](PCE_Polish_Backlog_Tracker.md) for executable PB-M\* polish milestones. |

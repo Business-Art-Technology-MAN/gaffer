@@ -85,7 +85,7 @@ from .PortfolioConstrainer import (
 	enforce_net_exposure,
 	emit_exposure_violation,
 )
-from .PortfolioAggregatorNode import PortfolioAggregatorNode
+from .PortfolioAggregatorNode import OTL_PORTFOLIO_INPUT, PortfolioAggregatorNode
 from .KyleLambdaNode import KyleLambdaNode
 from .SeriesCsvReaderNode import SeriesCsvReaderNode
 from . import MarketDataTimeseries

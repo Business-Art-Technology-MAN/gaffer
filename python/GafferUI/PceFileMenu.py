@@ -49,6 +49,11 @@ import GafferUI
 def appendDefinitions( menuDefinition : IECore.MenuDefinition, prefix : str = "/File/PCE" ) -> None :
 
 	menuDefinition.append( prefix + "/Save Graph As...", { "command" : saveGraphAs } )
+	if Gaffer.usdAvailableForPce() :
+		menuDefinition.append(
+			prefix + "/Save Graph As (PCE-USD/2 portfolio shell)…",
+			{ "command" : saveGraphAsUsdShell },
+		)
 	menuDefinition.append( prefix + "/Open Graph...", { "command" : openGraph } )
 
 
@@ -106,6 +111,55 @@ def saveGraphAs( menu : GafferUI.Menu ) -> None :
 	def task() -> None :
 
 		Gaffer.savePceGraphFile( script, outPath, meta, graphFormat = __graphFormat() )
+
+	bg = GafferUI.BackgroundTaskDialogue( "Saving PCE graph" )
+	result = bg.waitForBackgroundTask( task, parentWindow = scriptWindow )
+
+	if isinstance( result, IECore.Cancelled ) :
+		return
+
+	application = script.ancestor( Gaffer.ApplicationRoot )
+	GafferUI.FileMenu.addRecentFile( application, outPath )
+
+
+def saveGraphAsUsdShell( menu : GafferUI.Menu ) -> None :
+	## **PB-M3:** Same graph body as :func:`saveGraphAs`, but always **PCE-USD/2** with an empty
+	## :class:`Gaffer.PcePortfolioStagePayload` so ``/Portfolio`` exists on disk (requires **pxr**).
+
+	scriptWindow = menu.ancestor( GafferUI.ScriptWindow )
+	script = scriptWindow.scriptNode()
+	path, bookmarks = __pathAndBookmarks( scriptWindow )
+
+	dialogue = GafferUI.PathChooserDialogue(
+		path,
+		title = "Save PCE graph (PCE-USD/2 empty portfolio shell)",
+		confirmLabel = "Save",
+		leaf = True,
+		bookmarks = bookmarks,
+	)
+	chosen = dialogue.waitForPath( parentWindow = scriptWindow )
+
+	if not chosen :
+		return
+
+	outPath = str( chosen )
+	if not outPath.endswith( ".pce" ) :
+		outPath += ".pce"
+
+	meta = {
+		"app" : "MarketLab",
+		"sourceGafferScript" : script["fileName"].getValue() or "",
+	}
+
+	def task() -> None :
+
+		Gaffer.savePceGraphFile(
+			script,
+			outPath,
+			meta,
+			graphFormat = "usd",
+			portfolio = Gaffer.PcePortfolioStagePayload(),
+		)
 
 	bg = GafferUI.BackgroundTaskDialogue( "Saving PCE graph" )
 	result = bg.waitForBackgroundTask( task, parentWindow = scriptWindow )

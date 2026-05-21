@@ -12,7 +12,7 @@ Single AI coding agent (Claude Code or equivalent) · Human architect oversight
 
 ## Implementation status (MarketLab / PCE fork)
 
-**Snapshot: 2026-05-18.** Trackers: [`PCE_Phase2a_Progress.md`](PCE_Phase2a_Progress.md) (M1–M3), [`PCE_Phase2_MilestoneTracker.md`](PCE_Phase2_MilestoneTracker.md) (M4–M10), [`PCE_Phase3_MilestoneTracker.md`](PCE_Phase3_MilestoneTracker.md) (Layer 3 regimes), [`PCE_Phase4_MilestoneTracker.md`](PCE_Phase4_MilestoneTracker.md) (Layer 4), [`PCE_Phase5_MilestoneTracker.md`](PCE_Phase5_MilestoneTracker.md) (Layer 5), [`PCE_Phase6_MilestoneTracker.md`](PCE_Phase6_MilestoneTracker.md) (PCE USD stage), [`PCE_NextSteps.md`](PCE_NextSteps.md) (cross-phase backlog), [`PCE_Polish_And_Deferred_Work.md`](PCE_Polish_And_Deferred_Work.md) (polish + deferrals).
+**Snapshot: 2026-05-18.** Trackers: [`PCE_Phase2a_Progress.md`](PCE_Phase2a_Progress.md) (M1–M3), [`PCE_Phase2_MilestoneTracker.md`](PCE_Phase2_MilestoneTracker.md) (M4–M10), [`PCE_Phase3_MilestoneTracker.md`](PCE_Phase3_MilestoneTracker.md) (Layer 3 regimes), [`PCE_Phase4_MilestoneTracker.md`](PCE_Phase4_MilestoneTracker.md) (Layer 4), [`PCE_Phase5_MilestoneTracker.md`](PCE_Phase5_MilestoneTracker.md) (Layer 5), [`PCE_Phase6_MilestoneTracker.md`](PCE_Phase6_MilestoneTracker.md) (PCE USD stage), [`PCE_NextSteps.md`](PCE_NextSteps.md) (cross-phase backlog), [`PCE_Polish_And_Deferred_Work.md`](PCE_Polish_And_Deferred_Work.md) (polish + deferrals), [`PCE_Polish_Backlog_Tracker.md`](PCE_Polish_Backlog_Tracker.md) (PB-M\* polish milestones).
 
 | Phase | Status | Summary |
 | --- | --- | --- |

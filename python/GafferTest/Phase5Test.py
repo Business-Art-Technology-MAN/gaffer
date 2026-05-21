@@ -105,6 +105,31 @@ class Phase5Test( GafferTest.TestCase ) :
 
 		_ = list( n["out"]["targetWeights"].getValue() )
 
+	def testPortfolioInputMismatchWarning( self ) :
+
+		n = Gaffer.PortfolioAggregatorNode()
+		n["instrumentSignals"]["instrumentIds"].setValue(
+			IECore.StringVectorData( [ "A", "B", "C" ] )
+		)
+		sigs = n["instrumentSignals"].signalsPlug()
+		sigs.resize( 2 )
+		for ch in sigs.children() :
+			ch.alphaWeightPlug().setValue( 1.0 )
+			ch.confidencePlug().setValue( 1.0 )
+			ch.halfLifePlug().setValue( 1.0 )
+			ch.maxImpactFracPlug().setValue( 0.05 )
+			ch.regimeConditionPlug().setValue( "x" )
+			ch.sideBetPlug().setValue( False )
+
+		n["assetVariances"]["values"].setValue( IECore.FloatVectorData( [ 1.0, 1.0 ] ) )
+		n["maxSingleName"].setValue( 1.0 )
+
+		msg = (
+			"PortfolioAggregator: instrumentIds length (3) differs from SignalClosurePlug count (2)."
+		)
+		self.ignoreMessage( IECore.MessageHandler.Level.Warning, Gaffer.OTL_PORTFOLIO_INPUT, msg )
+		_ = list( n["out"]["targetWeights"].getValue() )
+
 
 if __name__ == "__main__" :
 	unittest.main()

@@ -23,6 +23,9 @@ from .PortfolioConstrainer import (
 	emit_exposure_violation,
 )
 
+## **IECore.msg** context when **`instrumentSignals`** layout is inconsistent (polish / PB-M2).
+OTL_PORTFOLIO_INPUT = "OTL_PORTFOLIO_INPUT"
+
 
 def _gather_signals( arrayPlug : Gaffer.ArraySignalPlug ) -> Tuple[List[str], List[float], List[float], List[float]] :
 
@@ -47,6 +50,43 @@ def _gather_signals( arrayPlug : Gaffer.ArraySignalPlug ) -> Tuple[List[str], Li
 			useIds.append( "inst{}".format( idx ) )
 
 	return useIds, alphas, confs, halfs
+
+
+def _emit_portfolio_input_warnings( arrayPlug : Gaffer.ArraySignalPlug, n_signals : int ) -> None :
+
+	n_ids = len( list( arrayPlug.instrumentIdsPlug().getValue() ) )
+	sigRoot = arrayPlug.signalsPlug()
+	skipped = 0
+	for el in sigRoot.children() :
+		if not isinstance( el, Gaffer.SignalClosurePlug ) :
+			skipped += 1
+	if skipped > 0 :
+		IECore.msg(
+			IECore.MessageHandler.Level.Warning,
+			OTL_PORTFOLIO_INPUT,
+			"PortfolioAggregator: {} signal array slot(s) are not SignalClosurePlug; "
+			"instrumentIds may not align with weights.".format( skipped ),
+		)
+	if n_ids > 0 and n_signals == 0 :
+		IECore.msg(
+			IECore.MessageHandler.Level.Warning,
+			OTL_PORTFOLIO_INPUT,
+			"PortfolioAggregator: instrumentIds length ({}) but no SignalClosurePlug inputs.".format( n_ids ),
+		)
+	elif n_signals > 0 and n_ids == 0 :
+		IECore.msg(
+			IECore.MessageHandler.Level.Warning,
+			OTL_PORTFOLIO_INPUT,
+			"PortfolioAggregator: {} SignalClosurePlug(s) but instrumentIds is empty.".format( n_signals ),
+		)
+	elif n_signals > 0 and n_ids != n_signals :
+		IECore.msg(
+			IECore.MessageHandler.Level.Warning,
+			OTL_PORTFOLIO_INPUT,
+			"PortfolioAggregator: instrumentIds length ({}) differs from SignalClosurePlug count ({}).".format(
+				n_ids, n_signals
+			),
+		)
 
 
 def _variances_from_plug( vp : Gaffer.VectorPlug, n : int ) -> np.ndarray :
@@ -167,6 +207,9 @@ class PortfolioAggregatorNode( Gaffer.ComputeNode ) :
 
 		ids, alphas, confs, halfs = _gather_signals( self["instrumentSignals"] )
 		n = len( alphas )
+
+		if plug.isSame( self["out"]["targetWeights"] ) :
+			_emit_portfolio_input_warnings( self["instrumentSignals"], n )
 
 		emptyIds = IECore.StringVectorData()
 		emptyF = IECore.FloatVectorData()
